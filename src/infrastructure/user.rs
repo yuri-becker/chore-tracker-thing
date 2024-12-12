@@ -1,59 +1,62 @@
-use rocket::http::{Cookie, Status};
+use crate::domain::oidc_user;
+use crate::infrastructure::database::Database;
+use crate::infrastructure::oidc_client::OidcClient;
+use log::{debug, warn};
+use openid::Jws;
+use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome};
-use rocket::serde::json::serde_json;
-use rocket::serde::{Deserialize, Serialize};
 use rocket::{async_trait, Request};
-use std::ops::Deref;
+use sea_orm::EntityTrait;
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(crate = "rocket::serde")]
 pub struct LoggedInUser {
-    pub groups: Vec<String>,
-    pub name: String,
-}
-
-impl TryFrom<Cookie<'_>> for LoggedInUser {
-    type Error = serde_json::Error;
-
-    fn try_from(cookie: Cookie) -> Result<Self, Self::Error> {
-        serde_json::from_str::<LoggedInUser>(cookie.value())
-    }
-}
-pub struct User {
-    user: Option<LoggedInUser>,
-}
-
-impl Deref for User {
-    type Target = Option<LoggedInUser>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.user
-    }
-}
-
-#[async_trait]
-impl<'r> FromRequest<'r> for User {
-    type Error = ();
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let user = request.cookies().get_private("user").and_then(|cookie| {
-            LoggedInUser::try_from(cookie)
-                .map(Some)
-                .unwrap_or(None)
-        });
-        Outcome::Success(User { user })
-    }
+    pub id: i32,
 }
 
 #[async_trait]
 impl<'r> FromRequest<'r> for LoggedInUser {
-    type Error = ();
-
+    type Error = Status;
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let user = User::from_request(request).await;
-        let user = user.expect("User::from_request should always return Success");
-        match user.user {
-            Some(logged_in_user) => Outcome::Success(logged_in_user),
-            None => Outcome::Error((Status::Unauthorized, ())),
+        match from_req(request).await {
+            Ok(user) => Outcome::Success(user),
+            Err(status) => Outcome::Error((status, status)),
         }
     }
+}
+async fn from_req(request: &Request<'_>) -> Result<LoggedInUser, Status> {
+    let database = request
+        .rocket()
+        .state::<Database>()
+        .expect("Database is not in State, this should not occur.");
+    let oidc_client = request
+        .rocket()
+        .state::<OidcClient>()
+        .expect("OIDC_Client is not in State, this should not occur.");
+    let token = request.cookies().get_private("oidc_token");
+    let token = token.ok_or(Status::Unauthorized).inspect_err(|_| {
+        debug!("No token found in cookie.");
+    })?;
+    let mut token = Jws::new_encoded(token.value());
+    oidc_client.decode_token(&mut token).map_err(|err| {
+        warn!("Could not decode token: {}", err);
+        Status::Unauthorized
+    })?;
+    oidc_client
+        .validate_token(&token, None, None)
+        .map_err(|err| {
+            debug!("Failed to validate token: {}", err);
+            Status::Unauthorized
+        })?;
+    let payload = token.payload().map_err(|_| {
+        debug!("Token does not have payload");
+        Status::Unauthorized
+    })?;
+    let user = oidc_user::Entity::find_by_id(&payload.sub)
+        .one(database.conn())
+        .await
+        .map_err(|err| {
+            warn!("Could not validate user due to Database err: {}", err);
+            Status::InternalServerError
+        })?;
+    let user = user.ok_or(Status::Unauthorized)?;
+    Ok(LoggedInUser { id: user.user_id })
 }

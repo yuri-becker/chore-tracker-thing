@@ -1,18 +1,40 @@
 use dotenv::var;
 use rocket::config::SecretKey;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::Deref;
 
+#[derive(Clone)]
 pub struct Hidden(String);
 
 #[derive(Debug)]
 pub struct Config {
-    pub oidc_endpoint: String,
-    pub oidc_client_id: String,
-    pub oidc_client_password: Hidden,
+    pub oidc: Oidc,
+    pub postgres: Postgres,
     pub host: String,
-    pub secret: Hidden,
-    port: String
+    secret: Hidden,
+    port: u16,
+}
+
+#[derive(Debug)]
+pub struct Oidc {
+    pub endpoint: String,
+    pub client_id: String,
+    pub client_password: Hidden,
+}
+
+#[derive(Debug)]
+pub struct Postgres {
+    pub host: String,
+    pub port: u16,
+    pub user: String,
+    pub password: Option<Hidden>,
+    pub database: String,
+}
+
+impl Display for Hidden {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
 }
 
 impl Debug for Hidden {
@@ -38,15 +60,59 @@ impl From<String> for Hidden {
 impl Config {
     pub fn from_dotenv() -> Self {
         Config {
-            oidc_endpoint: var("CHORES_OIDC_ENDPOINT").expect("CHORES_OIDC_ENDPOINT must be set"),
-            oidc_client_id: var("CHORES_OIDC_CLIENT_ID").expect("CHORES_OIDC_CLIENT_ID must be set"),
-            oidc_client_password: var("CHORES_OIDC_CLIENT_PASSWORD")
+            oidc: Oidc::from_dotenv(),
+            host: var("CHORES_HOST").expect("CHORES_HOST must be set"),
+            secret: var("CHORES_SECRET")
+                .expect("CHORES_SECRET must be set")
+                .into(),
+            postgres: Postgres::from_dotenv(),
+            port: var("CHORES_PORT")
+                .map(|it| {
+                    it.parse::<u16>()
+                        .expect("CHORES_PORT must be a valid port number")
+                })
+                .unwrap_or(8001),
+        }
+    }
+}
+
+impl Oidc {
+    pub fn from_dotenv() -> Self {
+        Oidc {
+            endpoint: var("CHORES_OIDC_ENDPOINT").expect("CHORES_OIDC_ENDPOINT must be set"),
+            client_id: var("CHORES_OIDC_CLIENT_ID").expect("CHORES_OIDC_CLIENT_ID must be set"),
+            client_password: var("CHORES_OIDC_CLIENT_PASSWORD")
                 .expect("CHORES_OIDC_CLIENT_PASSWORD must be set")
                 .into(),
-            host: var("CHORES_HOST").expect("CHORES_HOST must be set"),
-            secret: var("CHORES_SECRET").expect("CHORES_SECRET must be set").into(),
-            port: var("CHORES_PORT").unwrap_or("8001".to_string())
         }
+    }
+}
+
+impl Postgres {
+    pub fn from_dotenv() -> Self {
+        Self {
+            host: var("CHORES_POSTGRES_HOST").unwrap_or("127.0.0.1".to_string()),
+            port: var("CHORES_POSTGRES_PORT")
+                .map(|it| {
+                    it.parse::<u16>()
+                        .expect("CHORES_POSTGRES_PORT must be a valid port number")
+                })
+                .unwrap_or(3306),
+            user: var("CHORES_POSTGRES_USER").expect("CHORES_POSTGRES_USER must be set"),
+            password: var("CHORES_POSTGRES_PASSWORD").ok().map(Hidden::from),
+            database: var("CHORES_POSTGRES_DATABASE").expect("CHORES_POSTGRES_DATABASE must be set")
+        }
+    }
+
+    pub fn build_connection_string(&self) -> String {
+        format!(
+            "postgres://{}{}@{}:{}/{}",
+            self.user,
+            self.password.clone().map(|it| format!(":{}", it)).unwrap_or_default(),
+            self.host,
+            self.port,
+            self.database
+        )
     }
 }
 
@@ -54,7 +120,7 @@ impl From<&Config> for rocket::Config {
     fn from(val: &Config) -> Self {
         rocket::Config {
             secret_key: SecretKey::from(val.secret.as_bytes()),
-            port: val.port.parse::<u16>().expect("CHORES_PORT must be a valid port number"),
+            port: val.port,
             ..rocket::Config::default()
         }
     }

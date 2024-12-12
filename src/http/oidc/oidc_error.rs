@@ -8,4 +8,6 @@ pub enum OidcError {
     Misconfiguration(()),
     #[response(status = 500)]
     OidcEndpointUnreachable(()),
+    #[response(status = 500)]
+    DatabaseConnectionError(())
 }

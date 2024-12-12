@@ -12,10 +12,9 @@ pub fn logout(
     config: &State<Config>,
 ) -> Redirect {
     cookie_jar.remove_private("user");
-    cookie_jar.remove("logged-in");
-    if let Some(id_token) = cookie_jar.get("token") {
+    if let Some(id_token) = cookie_jar.get("oidc_token") {
         let id_token = id_token.value();
-        cookie_jar.remove_private("token");
+        cookie_jar.remove_private("oidc_token");
         if let Some(session_endpoint) = &oidc_client.config().end_session_endpoint {
             let mut endpoint = session_endpoint.clone();
             endpoint.query_pairs_mut()

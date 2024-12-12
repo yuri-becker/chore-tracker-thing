@@ -2,19 +2,19 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
-import { useIsLoggedIn } from './use-is-logged-in.tsx'
+import { useUser } from './use-user.tsx'
 
 function App () {
   const [count, setCount] = useState(0)
-  const isLoggedIn = useIsLoggedIn()
+  const user = useUser()
 
   return (
     <>
-      {!isLoggedIn && <a href="/oidc/login">
+      {!user && <a href="/oidc/login">
         <button>Login</button>
       </a>}
-      {isLoggedIn && <a href="/oidc/logout">
-        <button>Logout</button>
+      {user && <a href="/oidc/logout">
+        <button>Logout {user.name}</button>
       </a>}
       <div>
         <a href="https://vite.dev" target="_blank">
