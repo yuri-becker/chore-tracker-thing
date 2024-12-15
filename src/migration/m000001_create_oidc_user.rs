@@ -10,7 +10,7 @@ impl MigrationTrait for Migration {
             .create_table(
                 Table::create()
                     .table(User::Table)
-                    .col(pk_auto(User::Id))
+                    .col(pk_uuid(User::Id))
                     .to_owned(),
             )
             .await?;
@@ -25,7 +25,7 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(OidcUser::UserId).integer().not_null())
+                    .col(ColumnDef::new(OidcUser::UserId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("FK_OIDC_USERS_USERS")

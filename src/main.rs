@@ -1,15 +1,18 @@
+extern crate core;
+
 use dotenv::dotenv;
 use log::debug;
 use rocket::launch;
-use crate::http::{api, oidc};
+use crate::http::api::household;
+use crate::http::oidc;
 use crate::infrastructure::config::Config;
 use crate::infrastructure::database::Database;
 use crate::infrastructure::oidc_client::OidcClient;
 
 mod domain;
 mod http;
-mod infrastructure;
 mod migration;
+mod infrastructure;
 
 #[launch]
 async fn rocket() -> _ {
@@ -24,7 +27,7 @@ async fn rocket() -> _ {
     rocket::build()
         .configure(Into::<rocket::Config>::into(&config))
         .mount("/oidc", oidc::routes())
-        .mount("/api", api::routes())
+        .mount("/api/household", household::routes())
         .manage(OidcClient::new(&config).await)
         .manage(database)
         .manage(config)

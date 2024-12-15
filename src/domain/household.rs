@@ -3,31 +3,32 @@ use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
-#[sea_orm(table_name = "users")]
+#[sea_orm(table_name = "households")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: Uuid
+    pub id: Uuid,
+    pub name: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
-    HouseholdMemberships,
+    Members,
 }
 
 impl RelationTrait for Relation {
     fn def(&self) -> RelationDef {
         match self {
-            Self::HouseholdMemberships => Entity::belongs_to(super::household_member::Entity)
+            Relation::Members => Entity::belongs_to(super::household_member::Entity)
                 .from(Column::Id)
-                .to(super::household_member::Column::UserId)
-                .into()
+                .to(super::household_member::Column::HouseholdId)
+                .into(),
         }
     }
 }
 
 impl Related<super::household_member::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::HouseholdMemberships.def()
+        Relation::Members.def()
     }
 }
 

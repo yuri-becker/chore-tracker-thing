@@ -7,9 +7,10 @@ use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome};
 use rocket::{async_trait, Request};
 use sea_orm::EntityTrait;
+use uuid::Uuid;
 
 pub struct LoggedInUser {
-    pub id: i32,
+    pub id: Uuid,
 }
 
 #[async_trait]
