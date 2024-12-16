@@ -26,7 +26,7 @@ impl MigrationTrait for Migration {
                             .name("PK_HOUSEHOLD_MEMBER")
                             .col(HouseholdMembers::UserId)
                             .col(HouseholdMembers::HouseholdId)
-                            .primary()
+                            .primary(),
                     )
                     .foreign_key(
                         ForeignKey::create()
@@ -34,7 +34,7 @@ impl MigrationTrait for Migration {
                             .from(HouseholdMembers::Table, HouseholdMembers::UserId)
                             .to(User::Table, User::Id)
                             .on_delete(ForeignKeyAction::Cascade)
-                            .on_update(ForeignKeyAction::Cascade)
+                            .on_update(ForeignKeyAction::Cascade),
                     )
                     .foreign_key(
                         ForeignKey::create()
@@ -42,7 +42,7 @@ impl MigrationTrait for Migration {
                             .from(Household::Table, HouseholdMembers::HouseholdId)
                             .to(Household::Table, Household::Id)
                             .on_delete(ForeignKeyAction::Cascade)
-                            .on_update(ForeignKeyAction::Cascade)
+                            .on_update(ForeignKeyAction::Cascade),
                     )
                     .to_owned(),
             )

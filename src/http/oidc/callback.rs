@@ -1,16 +1,16 @@
+use crate::domain::oidc_user;
 use crate::http::oidc::callback_query::CallbackQuery;
 use crate::http::oidc::oidc_error::OidcError;
 use crate::http::oidc::oidc_error::OidcError::{OidcEndpointUnreachable, Unauthorized};
+use crate::infrastructure::database::Database;
 use crate::infrastructure::oidc_client::{OidcClient, UserInfo};
-use log::warn;
+use log::{debug, warn};
 use openid::Token;
+use rocket::http::private::cookie::CookieBuilder;
 use rocket::http::{CookieJar, SameSite};
 use rocket::response::Redirect;
 use rocket::serde::json::serde_json::json;
 use rocket::{get, State};
-use rocket::http::private::cookie::CookieBuilder;
-use crate::domain::oidc_user;
-use crate::infrastructure::database::Database;
 
 #[get("/callback")]
 pub async fn callback<'r>(
@@ -47,15 +47,19 @@ pub async fn callback<'r>(
                 .request_userinfo_custom::<UserInfo>(&token)
                 .await
                 .map_err(|_| OidcEndpointUnreachable(()))?;
-            oidc_user::get_or_register(database, user_info.sub).await.map_err(|err| {
-                warn!("Could not register OIDC user: {}", err);
-                OidcError::DatabaseConnectionError(())
-            })?;
+            debug!("userinfo received: {:?}", user_info);
+            let display_name = user_info.name.unwrap_or(user_info.preferred_username);
+            let user = oidc_user::get_or_register(database, user_info.sub, display_name)
+                .await
+                .map_err(|err| {
+                    warn!("Could not register OIDC user: {}", err);
+                    OidcError::DatabaseConnectionError(())
+                })?;
 
             cookie_jar.add(
                 CookieBuilder::new(
                     "user",
-                    json!({"name": user_info.preferred_username}).to_string()
+                    json!({"name": user.display_name.expect("Should be set after get_or_register")}).to_string()
                 )
                     .same_site(SameSite::Lax)
                     .http_only(false)
@@ -66,11 +70,10 @@ pub async fn callback<'r>(
                     "oidc_token",
                     bearer.id_token.expect("Bearer should have id token"),
                 )
-                    .same_site(SameSite::Lax)
-                    .build(),
+                .same_site(SameSite::Lax)
+                .build(),
             );
             Ok(Redirect::to("/"))
         }
     }
 }
-

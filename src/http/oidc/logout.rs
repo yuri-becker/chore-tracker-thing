@@ -1,9 +1,9 @@
-use log::info;
-use rocket::{get, State};
-use rocket::http::CookieJar;
-use rocket::response::Redirect;
 use crate::infrastructure::config::Config;
 use crate::infrastructure::oidc_client::OidcClient;
+use log::info;
+use rocket::http::CookieJar;
+use rocket::response::Redirect;
+use rocket::{get, State};
 
 #[get("/logout")]
 pub fn logout(
@@ -17,11 +17,15 @@ pub fn logout(
         cookie_jar.remove_private("oidc_token");
         if let Some(session_endpoint) = &oidc_client.config().end_session_endpoint {
             let mut endpoint = session_endpoint.clone();
-            endpoint.query_pairs_mut()
+            endpoint
+                .query_pairs_mut()
                 .append_pair("id_token_hint", id_token)
-                .append_pair("post_logout_redirect_uri", (config.host.clone() + "/").as_str());
+                .append_pair(
+                    "post_logout_redirect_uri",
+                    (config.host.clone() + "/").as_str(),
+                );
             info!("Redirecting to OIDC logout endpoint: {}", endpoint);
-            return Redirect::found::<String>(endpoint.to_string())
+            return Redirect::found::<String>(endpoint.to_string());
         };
     };
     Redirect::to("/")

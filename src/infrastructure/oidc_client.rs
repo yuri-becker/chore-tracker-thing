@@ -1,13 +1,15 @@
-use std::ops::Deref;
-use log::info;
-use openid::{Client, CompactJson, Discovered, DiscoveredClient, StandardClaims, StandardClaimsSubject};
-use url::Url;
-use rocket::serde::{Deserialize, Serialize};
-use openid::error::StandardClaimsSubjectMissing;
 use crate::infrastructure::config::Config;
+use log::info;
+use openid::error::StandardClaimsSubjectMissing;
+use openid::{
+    Client, CompactJson, Discovered, DiscoveredClient, StandardClaims, StandardClaimsSubject,
+};
+use rocket::serde::{Deserialize, Serialize};
+use std::ops::Deref;
+use url::Url;
 
 pub struct OidcClient {
-    client: Client<Discovered, StandardClaims>
+    client: Client<Discovered, StandardClaims>,
 }
 
 impl Deref for OidcClient {
@@ -19,16 +21,19 @@ impl Deref for OidcClient {
 }
 
 impl OidcClient {
-    pub async fn new(config: &Config) ->  Self {
+    pub async fn new(config: &Config) -> Self {
         let client = DiscoveredClient::discover(
             config.oidc.client_id.clone(),
             (*config.oidc.client_password).clone(),
             config.host.clone() + "/oidc/callback",
-            Url::parse(config.oidc.endpoint.as_str())
-                .expect("oidc_endpoint is not a valid URL"),
-        ).await;
+            Url::parse(config.oidc.endpoint.as_str()).expect("oidc_endpoint is not a valid URL"),
+        )
+        .await;
         if client.is_err() {
-            panic!("Failed to discover OIDC provider: {:?}", client.unwrap_err());
+            panic!(
+                "Failed to discover OIDC provider: {:?}",
+                client.unwrap_err()
+            );
         }
         let client = client.unwrap();
         info!("Successfully discovered OIDC provider");
@@ -45,6 +50,7 @@ pub struct UserInfo {
     pub iss: String,
     pub preferred_username: String,
     pub sub: String,
+    pub name: Option<String>,
 }
 
 impl CompactJson for UserInfo {}

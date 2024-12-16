@@ -1,13 +1,51 @@
 use dotenv::var;
 use rocket::config::SecretKey;
+use rocket::figment::Profile;
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::Deref;
+use std::str::FromStr;
+
+pub struct ModeNotAvailableError();
+
+impl Debug for ModeNotAvailableError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str("CHORES_MODE must be either \"debug\" or \"prod\"")
+    }
+}
+#[derive(Debug, Clone, Default)]
+pub enum Mode {
+    Debug,
+    #[default]
+    Prod,
+}
+
+impl FromStr for Mode {
+    type Err = ModeNotAvailableError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "debug" => Ok(Self::Debug),
+            "prod" => Ok(Self::Prod),
+            _ => Err(ModeNotAvailableError()),
+        }
+    }
+}
+
+impl From<Mode> for Profile {
+    fn from(val: Mode) -> Self {
+        match val {
+            Mode::Debug => rocket::Config::DEBUG_PROFILE,
+            Mode::Prod => rocket::Config::RELEASE_PROFILE,
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct Hidden(String);
 
 #[derive(Debug)]
 pub struct Config {
+    pub mode: Mode,
     pub oidc: Oidc,
     pub postgres: Postgres,
     pub host: String,
@@ -72,6 +110,9 @@ impl Config {
                         .expect("CHORES_PORT must be a valid port number")
                 })
                 .unwrap_or(8001),
+            mode: var("CHORES_MODE")
+                .map(|it| Mode::from_str(&it).unwrap())
+                .unwrap_or_default(),
         }
     }
 }
@@ -100,7 +141,8 @@ impl Postgres {
                 .unwrap_or(3306),
             user: var("CHORES_POSTGRES_USER").expect("CHORES_POSTGRES_USER must be set"),
             password: var("CHORES_POSTGRES_PASSWORD").ok().map(Hidden::from),
-            database: var("CHORES_POSTGRES_DATABASE").expect("CHORES_POSTGRES_DATABASE must be set")
+            database: var("CHORES_POSTGRES_DATABASE")
+                .expect("CHORES_POSTGRES_DATABASE must be set"),
         }
     }
 
@@ -108,7 +150,10 @@ impl Postgres {
         format!(
             "postgres://{}{}@{}:{}/{}",
             self.user,
-            self.password.clone().map(|it| format!(":{}", it)).unwrap_or_default(),
+            self.password
+                .clone()
+                .map(|it| format!(":{}", it))
+                .unwrap_or_default(),
             self.host,
             self.port,
             self.database
@@ -121,6 +166,7 @@ impl From<&Config> for rocket::Config {
         rocket::Config {
             secret_key: SecretKey::from(val.secret.as_bytes()),
             port: val.port,
+            profile: val.mode.clone().into(),
             ..rocket::Config::default()
         }
     }

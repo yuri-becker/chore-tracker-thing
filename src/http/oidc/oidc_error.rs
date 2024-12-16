@@ -9,5 +9,5 @@ pub enum OidcError {
     #[response(status = 500)]
     OidcEndpointUnreachable(()),
     #[response(status = 500)]
-    DatabaseConnectionError(())
+    DatabaseConnectionError(()),
 }

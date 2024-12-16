@@ -1,6 +1,6 @@
-use rocket::{async_trait, Request};
-use rocket::request::{FromRequest, Outcome};
 use rocket::http::Status;
+use rocket::request::{FromRequest, Outcome};
+use rocket::{async_trait, Request};
 
 pub enum CallbackQuery {
     Error(CallbackError),

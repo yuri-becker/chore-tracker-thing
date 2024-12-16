@@ -1,9 +1,9 @@
-use std::fmt::{Debug, Formatter};
 use log::error;
 use rocket::http::Status;
 use rocket::response::Responder;
 use rocket::Request;
 use sea_orm::DbErr;
+use std::fmt::{Debug, Formatter};
 
 pub struct DatabaseError {
     err: DbErr,

@@ -1,6 +1,7 @@
 use rocket::serde::{Deserialize, Serialize};
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::Set;
+use sea_orm::NotSet;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
@@ -8,6 +9,7 @@ use sea_orm::ActiveValue::Set;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
+    pub display_name: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
@@ -36,6 +38,7 @@ impl ActiveModelBehavior for ActiveModel {
     fn new() -> Self {
         Self {
             id: Set(Uuid::now_v7()),
+            display_name: NotSet,
         }
     }
 }

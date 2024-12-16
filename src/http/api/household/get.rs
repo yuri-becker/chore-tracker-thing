@@ -3,12 +3,12 @@ use crate::http::api::household::response::Household;
 use crate::http::error::database_error::DatabaseError;
 use crate::infrastructure::database::Database;
 use crate::infrastructure::user::LoggedInUser;
+use rocket::futures::future::try_join_all;
 use rocket::serde::json::Json;
 use rocket::{get, State};
 use sea_orm::entity::prelude::*;
 use sea_orm::{ColumnTrait, QueryFilter};
 use std::iter::Iterator;
-use rocket::futures::future::try_join_all;
 
 #[get("/")]
 pub async fn get(

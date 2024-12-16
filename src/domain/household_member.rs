@@ -8,13 +8,13 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub user_id: Uuid,
     #[sea_orm(primary_key)]
-    pub household_id: Uuid
+    pub household_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
     User,
-    Household
+    Household,
 }
 
 impl RelationTrait for Relation {

@@ -55,7 +55,7 @@ mod test {
     impl From<MockDatabase> for Database {
         fn from(val: MockDatabase) -> Self {
             Database {
-                connection: val.into_connection()
+                connection: val.into_connection(),
             }
         }
     }

@@ -1,11 +1,11 @@
+use crate::infrastructure::oidc_client::OidcClient;
 use log::info;
 use openid::Options;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use rocket::{get, State};
 use rocket::http::Status;
 use rocket::response::Redirect;
-use crate::infrastructure::oidc_client::OidcClient;
+use rocket::{get, State};
 
 #[get("/login")]
 pub fn login(oidc_client: &State<OidcClient>) -> Result<Redirect, Status> {

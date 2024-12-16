@@ -1,18 +1,18 @@
 extern crate core;
 
-use dotenv::dotenv;
-use log::debug;
-use rocket::launch;
 use crate::http::api::household;
 use crate::http::oidc;
 use crate::infrastructure::config::Config;
 use crate::infrastructure::database::Database;
 use crate::infrastructure::oidc_client::OidcClient;
+use dotenv::dotenv;
+use log::debug;
+use rocket::launch;
 
 mod domain;
 mod http;
-mod migration;
 mod infrastructure;
+mod migration;
 
 #[launch]
 async fn rocket() -> _ {
