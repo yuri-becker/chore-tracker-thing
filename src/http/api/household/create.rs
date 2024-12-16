@@ -1,5 +1,5 @@
 use crate::domain;
-use crate::http::api::household::response::Household;
+use crate::http::api::household::response::Response;
 use crate::http::error::database_error::DatabaseError;
 use crate::infrastructure::database::Database;
 use crate::infrastructure::user::LoggedInUser;
@@ -21,7 +21,7 @@ pub async fn create(
     user: LoggedInUser,
     request: Json<Request>,
     db: &Database,
-) -> Result<Json<Household>, DatabaseError> {
+) -> Result<Json<Response>, DatabaseError> {
     let household = domain::household::ActiveModel {
         id: Set(Uuid::now_v7()),
         name: Set(request.name.clone()),
@@ -36,7 +36,7 @@ pub async fn create(
     .insert(db.conn())
     .await
     .map_err(DatabaseError::from)?;
-    Household::from_model(db, household)
+    Response::from_model(db, household)
         .await
         .map(Json::from)
         .map_err(DatabaseError::from)

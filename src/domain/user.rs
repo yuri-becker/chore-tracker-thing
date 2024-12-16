@@ -12,6 +12,12 @@ pub struct Model {
     pub display_name: Option<String>,
 }
 
+impl Model {
+    pub fn name(&self) -> String {
+        self.display_name.clone().unwrap_or(self.id.to_string())
+    }
+}
+
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
     HouseholdMemberships,
