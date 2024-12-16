@@ -47,7 +47,7 @@ pub async fn get_or_register(db: &Database, subject: String) -> Result<Model, Db
 }
 
 async fn register(db: &Database, subject: String) -> Result<Model, DbErr> {
-    let user = user::ActiveModel { id: Set(Uuid::now_v7()) }.insert(db.conn()).await?;
+    let user = user::ActiveModel::new().insert(db.conn()).await?;
     let oidc_user = ActiveModel {
         subject: Set(subject),
         user_id: Set(user.id),

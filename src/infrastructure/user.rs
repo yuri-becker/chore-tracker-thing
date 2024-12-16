@@ -1,4 +1,4 @@
-use crate::domain::oidc_user;
+use crate::domain::{oidc_user, user};
 use crate::infrastructure::database::Database;
 use crate::infrastructure::oidc_client::OidcClient;
 use log::{debug, warn};
@@ -59,5 +59,17 @@ async fn from_req(request: &Request<'_>) -> Result<LoggedInUser, Status> {
             Status::InternalServerError
         })?;
     let user = user.ok_or(Status::Unauthorized)?;
-    Ok(LoggedInUser { id: user.user_id })
+    Ok(user.into())
+}
+
+impl From<user::Model> for LoggedInUser {
+    fn from(val: user::Model) -> Self {
+        LoggedInUser { id: val.id }
+    }
+}
+
+impl From<oidc_user::Model> for LoggedInUser {
+    fn from(val: oidc_user::Model) -> Self {
+        LoggedInUser { id: val.user_id }
+    }
 }

@@ -5,7 +5,7 @@ use crate::infrastructure::database::Database;
 use crate::infrastructure::user::LoggedInUser;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
-use rocket::{post, State};
+use rocket::post;
 use sea_orm::ActiveModelTrait;
 use sea_orm::ActiveValue::Set;
 use uuid::Uuid;
@@ -20,7 +20,7 @@ pub struct Request {
 pub async fn create(
     user: LoggedInUser,
     request: Json<Request>,
-    db: &State<Database>,
+    db: &Database,
 ) -> Result<Json<Household>, DatabaseError> {
     let household = domain::household::ActiveModel {
         id: Set(Uuid::now_v7()),

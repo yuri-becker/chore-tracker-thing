@@ -1,12 +1,13 @@
 use rocket::serde::{Deserialize, Serialize};
 use sea_orm::entity::prelude::*;
+use sea_orm::ActiveValue::Set;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
 #[sea_orm(table_name = "users")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: Uuid
+    pub id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
@@ -20,7 +21,7 @@ impl RelationTrait for Relation {
             Self::HouseholdMemberships => Entity::belongs_to(super::household_member::Entity)
                 .from(Column::Id)
                 .to(super::household_member::Column::UserId)
-                .into()
+                .into(),
         }
     }
 }
@@ -31,4 +32,10 @@ impl Related<super::household_member::Entity> for Entity {
     }
 }
 
-impl ActiveModelBehavior for ActiveModel {}
+impl ActiveModelBehavior for ActiveModel {
+    fn new() -> Self {
+        Self {
+            id: Set(Uuid::now_v7()),
+        }
+    }
+}
