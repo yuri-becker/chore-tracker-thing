@@ -418,6 +418,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "dotenv",
+ "husky-rs",
  "log",
  "openid",
  "pretty_env_logger",
@@ -1199,6 +1200,12 @@ name = "humantime"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
+
+[[package]]
+name = "husky-rs"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71a27f5032d996ed5d0cf3e6a072344ff1230c6ec658537daf8e3c15483d74c8"
 
 [[package]]
 name = "hyper"
