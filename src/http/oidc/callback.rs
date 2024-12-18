@@ -48,7 +48,10 @@ pub async fn callback<'r>(
                 .await
                 .map_err(|_| OidcEndpointUnreachable(()))?;
             debug!("userinfo received: {:?}", user_info);
-            let display_name = user_info.name.unwrap_or(user_info.preferred_username);
+            let display_name = user_info
+                .name
+                .filter(|it| !it.is_empty())
+                .unwrap_or(user_info.preferred_username);
             let user = oidc_user::get_or_register(database, user_info.sub, display_name)
                 .await
                 .map_err(|err| {
