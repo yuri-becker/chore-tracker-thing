@@ -2,6 +2,7 @@ use dotenv::var;
 use rocket::config::SecretKey;
 use rocket::figment::Profile;
 use std::fmt::{Debug, Display, Formatter};
+use std::net::IpAddr;
 use std::ops::Deref;
 use std::str::FromStr;
 
@@ -167,6 +168,7 @@ impl From<&Config> for rocket::Config {
             secret_key: SecretKey::from(val.secret.as_bytes()),
             port: val.port,
             profile: val.mode.clone().into(),
+            address: IpAddr::from_str("0.0.0.0").unwrap(),
             ..rocket::Config::default()
         }
     }

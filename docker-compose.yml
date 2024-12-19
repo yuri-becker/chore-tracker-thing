@@ -10,6 +10,18 @@ services:
       POSTGRES_DB: ${CHORES_POSTGRES_DATABASE}
       POSTGRES_USER: ${CHORES_POSTGRES_USER}
       POSTGRES_PASSWORD: ${CHORES_POSTGRES_PASSWORD}
-
+  backend:
+    image: rust:1
+    depends_on:
+      - postgres
+    environment:
+      CHORES_POSTGRES_HOST: "postgres"
+      CHORES_POSTGRES_PORT: "5432"
+    volumes: 
+      - ".:/opt/chore-tracker-thing"
+    ports:
+      - "8001:8001"
+    working_dir: "/opt/chore-tracker-thing"
+    command: ["cargo", "run", "--target-dir", "target.docker"]
 volumes:
   postgres-data:
