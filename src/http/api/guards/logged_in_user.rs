@@ -1,4 +1,4 @@
-use crate::domain::{oidc_user, user};
+use crate::domain::{household_member, oidc_user, user};
 use crate::infrastructure::database::Database;
 use crate::infrastructure::oidc_client::OidcClient;
 use log::{debug, warn};
@@ -6,7 +6,7 @@ use openid::Jws;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome};
 use rocket::{async_trait, Request};
-use sea_orm::EntityTrait;
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use uuid::Uuid;
 
 pub struct LoggedInUser {
@@ -71,5 +71,21 @@ impl From<user::Model> for LoggedInUser {
 impl From<oidc_user::Model> for LoggedInUser {
     fn from(val: oidc_user::Model) -> Self {
         LoggedInUser { id: val.user_id }
+    }
+}
+
+impl LoggedInUser {
+    pub async fn in_household(&self, database: &Database, household_id: Uuid) -> Result<(), Status> {
+        household_member::Entity::find()
+            .filter(household_member::Column::HouseholdId.eq(household_id))
+            .filter(household_member::Column::UserId.eq(self.id))
+            .one(database.conn())
+            .await
+            .map_err(|err| {
+                warn!("Failed to query household_members: {}", err);
+                Status::InternalServerError
+            })?
+            .map(|_| ())
+            .ok_or(Status::Unauthorized)
     }
 }

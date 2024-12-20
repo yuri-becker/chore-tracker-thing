@@ -1,14 +1,15 @@
-use crate::domain::{household, household_member};
 use crate::http::api::household::response::Response;
 use crate::http::error::database_error::DatabaseError;
 use crate::infrastructure::database::Database;
-use crate::infrastructure::user::LoggedInUser;
 use rocket::futures::future::try_join_all;
 use rocket::serde::json::Json;
 use rocket::{get, State};
 use sea_orm::entity::prelude::*;
 use sea_orm::{ColumnTrait, QueryFilter};
 use std::iter::Iterator;
+use crate::domain::{household, household_member};
+use crate::http::api::FromModel;
+use crate::http::api::guards::logged_in_user::LoggedInUser;
 
 #[get("/")]
 pub async fn get(
