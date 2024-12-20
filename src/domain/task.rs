@@ -27,13 +27,13 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
-    Household
+    Household,
 }
 
 impl RelationTrait for Relation {
     fn def(&self) -> RelationDef {
         match self {
-            Self::Household => Entity::has_one(super::household::Entity).into()
+            Self::Household => Entity::has_one(super::household::Entity).into(),
         }
     }
 }

@@ -13,7 +13,7 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
     Members,
-    Tasks
+    Tasks,
 }
 
 impl RelationTrait for Relation {
@@ -26,7 +26,7 @@ impl RelationTrait for Relation {
             Self::Tasks => Entity::belongs_to(super::task::Entity)
                 .from(Column::Id)
                 .to(super::task::Column::HouseholdId)
-                .into()
+                .into(),
         }
     }
 }

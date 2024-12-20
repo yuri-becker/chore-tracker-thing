@@ -1,16 +1,20 @@
-use std::ops::Deref;
+use crate::infrastructure::database::Database;
 use rocket::async_trait;
 use rocket::http::Status;
 use rocket::request::FromParam;
 use sea_orm::{DbErr, ModelTrait};
+use std::ops::Deref;
 use uuid::Uuid;
-use crate::infrastructure::database::Database;
 
-pub mod household;
+mod api_error;
 pub mod guards;
+pub mod household;
 
 #[async_trait]
-pub trait FromModel<TModel: ModelTrait> where Self: Sized {
+pub trait FromModel<TModel: ModelTrait>
+where
+    Self: Sized,
+{
     async fn from_model(db: &Database, model: TModel) -> Result<Self, DbErr>;
 }
 
@@ -28,6 +32,8 @@ impl FromParam<'_> for UuidParam {
     type Error = Status;
 
     fn from_param(param: &'_ str) -> Result<Self, Self::Error> {
-        Uuid::parse_str(param).map_err(|_| Status::BadRequest).map(UuidParam)
+        Uuid::parse_str(param)
+            .map_err(|_| Status::BadRequest)
+            .map(UuidParam)
     }
 }

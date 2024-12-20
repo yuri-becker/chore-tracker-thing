@@ -1,11 +1,11 @@
-use rocket::async_trait;
 use crate::domain::{household, household_member, user};
+use crate::http::api::FromModel;
 use crate::infrastructure::database::Database;
+use rocket::async_trait;
 use rocket::futures::future::try_join_all;
 use rocket::serde::{Deserialize, Serialize};
 use sea_orm::{DbErr, ModelTrait};
 use uuid::Uuid;
-use crate::http::api::FromModel;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]

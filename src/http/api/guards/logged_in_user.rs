@@ -1,4 +1,5 @@
 use crate::domain::{household_member, oidc_user, user};
+use crate::http::api::api_error::ApiError;
 use crate::infrastructure::database::Database;
 use crate::infrastructure::oidc_client::OidcClient;
 use log::{debug, warn};
@@ -75,17 +76,18 @@ impl From<oidc_user::Model> for LoggedInUser {
 }
 
 impl LoggedInUser {
-    pub async fn in_household(&self, database: &Database, household_id: Uuid) -> Result<(), Status> {
+    pub async fn in_household(
+        &self,
+        database: &Database,
+        household_id: Uuid,
+    ) -> Result<(), ApiError> {
         household_member::Entity::find()
             .filter(household_member::Column::HouseholdId.eq(household_id))
             .filter(household_member::Column::UserId.eq(self.id))
             .one(database.conn())
             .await
-            .map_err(|err| {
-                warn!("Failed to query household_members: {}", err);
-                Status::InternalServerError
-            })?
+            .map_err(ApiError::from)?
             .map(|_| ())
-            .ok_or(Status::Unauthorized)
+            .ok_or(ApiError::NotInHousehold(()))
     }
 }
