@@ -1,5 +1,7 @@
+use chrono::{Months, NaiveDate, TimeDelta};
 use rocket::serde::{Deserialize, Serialize};
 use sea_orm::entity::prelude::*;
+use std::ops::Add;
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
 #[serde(crate = "rocket::serde")]
@@ -11,6 +13,16 @@ pub enum RecurrenceUnit {
     Weeks,
     #[sea_orm(string_value = "Months")]
     Month,
+}
+
+impl RecurrenceUnit {
+    pub fn next(&self, naive_date: NaiveDate, interval: u32) -> NaiveDate {
+        match self {
+            RecurrenceUnit::Days => naive_date.add(TimeDelta::days(interval as i64)),
+            RecurrenceUnit::Weeks => naive_date.add(TimeDelta::weeks(interval as i64)),
+            RecurrenceUnit::Month => naive_date.add(Months::new(interval)),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Deserialize, Serialize)]
@@ -28,12 +40,17 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
     Household,
+    Todos,
 }
 
 impl RelationTrait for Relation {
     fn def(&self) -> RelationDef {
         match self {
             Self::Household => Entity::has_one(super::household::Entity).into(),
+            Self::Todos => Entity::belongs_to(super::todo::Entity)
+                .from(Column::Id)
+                .to(super::todo::Column::TaskId)
+                .into(),
         }
     }
 }
@@ -41,6 +58,12 @@ impl RelationTrait for Relation {
 impl Related<super::household::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Household.def()
+    }
+}
+
+impl Related<super::todo::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Todos.def()
     }
 }
 

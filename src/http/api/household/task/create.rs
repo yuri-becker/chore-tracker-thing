@@ -1,15 +1,16 @@
-use crate::domain::task;
 use crate::domain::task::RecurrenceUnit;
+use crate::domain::{task, todo};
 use crate::http::api::api_error::ApiError;
 use crate::http::api::guards::logged_in_user::LoggedInUser;
 use crate::http::api::household::task::response::Response;
 use crate::http::api::{FromModel, UuidParam};
 use crate::infrastructure::database::Database;
+use chrono::Local;
 use rocket::post;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
-use sea_orm::ActiveModelTrait;
 use sea_orm::ActiveValue::Set;
+use sea_orm::{ActiveModelTrait, NotSet, TransactionTrait};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -34,19 +35,36 @@ pub async fn create(
             "recurrence_interval needs to be at least 1.",
         ));
     }
-    let task = task::ActiveModel {
-        id: Set(Uuid::now_v7()),
-        household_id: Set(*household_id),
-        title: Set(request.title),
-        recurrence_unit: Set(request.recurrence_unit),
-        recurrence_interval: Set(i32::from(request.recurrence_interval)),
-    }
-    .insert(db.conn())
-    .await
-    .map_err(ApiError::from)?;
+    let task = db
+        .conn()
+        .transaction(|tx| {
+            Box::pin(async move {
+                let task = task::ActiveModel {
+                    id: Set(Uuid::now_v7()),
+                    household_id: Set(*household_id),
+                    title: Set(request.title),
+                    recurrence_unit: Set(request.recurrence_unit),
+                    recurrence_interval: Set(i32::from(request.recurrence_interval)),
+                }
+                .insert(tx)
+                .await?;
+                todo::ActiveModel {
+                    task_id: Set(task.id),
+                    iteration: Set(0),
+                    due_date: Set(Local::now().date_naive()),
+                    completed_by: NotSet,
+                    completed_on: NotSet,
+                }
+                .insert(tx)
+                .await?;
+                Ok(task)
+            })
+        })
+        .await
+        .map_err(ApiError::from)?;
 
     Response::from_model(db, task)
         .await
-        .map_err(ApiError::from)
         .map(Json::from)
+        .map_err(ApiError::from)
 }

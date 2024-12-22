@@ -21,6 +21,7 @@ impl Model {
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
     HouseholdMemberships,
+    TodoCompletions,
 }
 
 impl RelationTrait for Relation {
@@ -30,6 +31,10 @@ impl RelationTrait for Relation {
                 .from(Column::Id)
                 .to(super::household_member::Column::UserId)
                 .into(),
+            Self::TodoCompletions => Entity::belongs_to(super::todo::Entity)
+                .from(Column::Id)
+                .to(super::todo::Column::CompletedBy)
+                .into(),
         }
     }
 }
@@ -37,6 +42,12 @@ impl RelationTrait for Relation {
 impl Related<super::household_member::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::HouseholdMemberships.def()
+    }
+}
+
+impl Related<super::todo::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TodoCompletions.def()
     }
 }
 

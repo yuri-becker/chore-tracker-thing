@@ -5,6 +5,7 @@ mod m000001_create_oidc_user;
 mod m000002_create_households;
 mod m000003_add_column_display_name;
 mod m000004_create_tasks;
+mod m000005_create_todos;
 
 pub struct Migrator;
 
@@ -16,6 +17,7 @@ impl MigratorTrait for Migrator {
             Box::new(m000002_create_households::Migration),
             Box::new(m000003_add_column_display_name::Migration),
             Box::new(m000004_create_tasks::Migration),
+            Box::new(m000005_create_todos::Migration),
         ]
     }
 }
