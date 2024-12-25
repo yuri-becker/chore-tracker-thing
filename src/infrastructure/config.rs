@@ -1,6 +1,8 @@
 use dotenv::var;
-use rocket::config::SecretKey;
+use log::LevelFilter;
+use rocket::config::{Ident, SecretKey};
 use rocket::figment::Profile;
+use rocket::log::LogLevel;
 use std::fmt::{Debug, Display, Formatter};
 use std::net::IpAddr;
 use std::ops::Deref;
@@ -169,6 +171,13 @@ impl From<&Config> for rocket::Config {
             port: val.port,
             profile: val.mode.clone().into(),
             address: IpAddr::from_str("0.0.0.0").unwrap(),
+            ident: Ident::none(),
+            log_level: match log::max_level() {
+                LevelFilter::Off => LogLevel::Off,
+                LevelFilter::Debug | LevelFilter::Trace => LogLevel::Debug,
+                LevelFilter::Info | LevelFilter::Warn => LogLevel::Normal,
+                LevelFilter::Error => LogLevel::Critical,
+            },
             ..rocket::Config::default()
         }
     }

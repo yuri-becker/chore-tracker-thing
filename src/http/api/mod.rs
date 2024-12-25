@@ -1,4 +1,5 @@
 use crate::infrastructure::database::Database;
+use log::debug;
 use rocket::async_trait;
 use rocket::http::Status;
 use rocket::request::FromParam;
@@ -33,7 +34,10 @@ impl FromParam<'_> for UuidParam {
 
     fn from_param(param: &'_ str) -> Result<Self, Self::Error> {
         Uuid::parse_str(param)
-            .map_err(|_| Status::BadRequest)
+            .map_err(|err| {
+                debug!("Could not parse UUID: {}", err);
+                Status::BadRequest
+            })
             .map(UuidParam)
     }
 }

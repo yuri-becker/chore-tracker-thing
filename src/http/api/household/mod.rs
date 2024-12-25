@@ -11,6 +11,7 @@ pub fn routes() -> Vec<Route> {
         get::get,
         task::complete::complete,
         task::create::create,
-        task::get::get
+        task::get::get,
+        task::details::details,
     ]
 }

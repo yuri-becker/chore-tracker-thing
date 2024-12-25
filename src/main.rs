@@ -8,6 +8,7 @@ use crate::infrastructure::oidc_client::OidcClient;
 use dotenv::dotenv;
 use log::debug;
 use rocket::launch;
+use crate::infrastructure::access_control::AccessControl;
 
 mod domain;
 mod http;
@@ -25,6 +26,7 @@ async fn rocket() -> _ {
     migration::migrate(&database).await;
 
     rocket::build()
+        .attach(AccessControl::new(&config.host))
         .configure(Into::<rocket::Config>::into(&config))
         .mount("/oidc", oidc::routes())
         .mount("/api/household", household::routes())
