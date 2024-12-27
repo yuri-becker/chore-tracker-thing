@@ -1,7 +1,7 @@
 import { Button } from '@ariakit/react'
-import { useUser } from './use-user.tsx'
 import '@picocss/pico/css/pico.css'
 import HouseholdForm from './household-form.tsx'
+import { useUser } from './use-user.tsx'
 
 function App () {
   const user = useUser()
@@ -15,7 +15,7 @@ function App () {
         <a href="/oidc/logout">
           <Button>Logout {user.name}</Button>
         </a>
-        <HouseholdForm/>
+        <HouseholdForm />
       </>
       }
 

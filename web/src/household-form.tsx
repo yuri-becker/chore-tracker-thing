@@ -2,18 +2,18 @@ import * as Ariakit from '@ariakit/react'
 import '@picocss/pico/css/pico.css'
 
 export default function HouseholdForm () {
-  const form = Ariakit.useFormStore({ defaultValues: { name: "" } })
+  const form = Ariakit.useFormStore({ defaultValues: { name: '' } })
 
   form.useSubmit(async (state) => {
-    await fetch("/api/household", {
-      method: "POST",
+    await fetch('/api/household', {
+      method: 'POST',
       body: JSON.stringify(state.values)
     })
-  });
+  })
 
   form.useValidate(store => {
-    if (store.values.name.length == 0) {
-      store.errors.name = "Name is required"
+    if (store.values.name.length === 0) {
+      store.errors.name = 'Name is required'
     }
   })
 
@@ -23,7 +23,7 @@ export default function HouseholdForm () {
         <h2>New Household</h2>
         <div>
           <Ariakit.FormLabel name={form.names.name} >Household Name</Ariakit.FormLabel>
-          <Ariakit.FormInput name={form.names.name} placeholder="Miya's House"/>
+          <Ariakit.FormInput name={form.names.name} placeholder="Miya's House" />
           <Ariakit.FormError name={form.names.name} />
         </div>
         <div >
@@ -33,5 +33,5 @@ export default function HouseholdForm () {
         </div>
       </Ariakit.Form>
     </Ariakit.FormProvider>
-)
+  )
 }
