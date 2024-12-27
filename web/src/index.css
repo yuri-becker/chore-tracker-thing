@@ -1,0 +1,3 @@
+form div[role="alert"] {
+    color: var(--pico-form-element-invalid-active-border-color);
+}
