@@ -1,9 +1,9 @@
-import { useUser } from './use-user.tsx'
 import '@picocss/pico/css/pico.css'
-import HouseholdForm from './household-form.tsx'
 import { Button } from '@ariakit/react'
 import { useState } from 'react'
 import { Menu, LogOut, Settings, Plus, X } from 'react-feather'
+import HouseholdForm from './household-form.tsx'
+import { useUser } from './use-user.tsx'
 
 function App () {
   const user = useUser()
@@ -21,19 +21,19 @@ function App () {
         <aside className={isMenuOpen ? 'open main-menu' : 'main-menu'}>
           <div>
             <Button className={'outline secondary flat'} onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              <X/>
+              <X />
             </Button>
           </div>
           <nav>
             <ul>
               <li>
-                <Plus/>&nbsp;Create Task
+                <Plus />&nbsp;Create Task
               </li>
               <li>
-                <Settings/>&nbsp;Settings
+                <Settings />&nbsp;Settings
               </li>
               <li>
-                <a className="contrast" href="/oidc/logout"><LogOut/>&nbsp;Logout {user.name}</a>
+                <a className="contrast" href="/oidc/logout"><LogOut />&nbsp;Logout {user.name}</a>
               </li>
             </ul>
           </nav>
@@ -41,10 +41,10 @@ function App () {
         <main className="container">
           <header>
             <Button id="burger-menu" className={'outline secondary flat'} onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              <Menu/>
+              <Menu />
             </Button>
           </header>
-          <HouseholdForm/>
+          <HouseholdForm />
         </main>
       </>
       }
