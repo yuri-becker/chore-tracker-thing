@@ -1,54 +1,32 @@
 import '@picocss/pico/css/pico.css'
-import { Button } from '@ariakit/react'
 import { useState } from 'react'
-import { Menu, LogOut, Settings, Plus, X } from 'react-feather'
-import HouseholdForm from './household-form.tsx'
+import { BrowserRouter, Route, Routes } from 'react-router'
+import { Header } from './components/header.tsx'
+import { MainMenu } from './components/main-menu.tsx'
+import CreateHouseholdPage from './pages/create-household'
+import LoginPage from './pages/login'
+import SettingsPage from './pages/settings/'
 import { useUser } from './use-user.tsx'
 
 function App () {
   const user = useUser()
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false)
-
   return (
-    <>
-      {!user && <>
-        <a href="/oidc/login">
-          <Button>Login</Button>
-        </a>
-      </>}
+    <BrowserRouter>
+      { !user && <LoginPage />}
 
       {user && <>
-        <aside className={isMenuOpen ? 'open main-menu' : 'main-menu'}>
-          <div>
-            <Button className={'outline secondary flat'} onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              <X />
-            </Button>
-          </div>
-          <nav>
-            <ul>
-              <li>
-                <Plus />&nbsp;Create Task
-              </li>
-              <li>
-                <Settings />&nbsp;Settings
-              </li>
-              <li>
-                <a className="contrast" href="/oidc/logout"><LogOut />&nbsp;Logout {user.name}</a>
-              </li>
-            </ul>
-          </nav>
-        </aside>
+        <MainMenu isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
         <main className="container">
-          <header>
-            <Button id="burger-menu" className={'outline secondary flat'} onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              <Menu />
-            </Button>
-          </header>
-          <HouseholdForm />
+          <Header setIsMenuOpen={setIsMenuOpen} isMenuOpen={isMenuOpen} />
+          <Routes>
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route index path="/" element={<CreateHouseholdPage />} />
+          </Routes>
         </main>
       </>
       }
-    </>
+    </BrowserRouter>
   )
 }
 
