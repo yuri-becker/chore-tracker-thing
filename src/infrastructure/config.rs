@@ -141,7 +141,7 @@ impl Postgres {
                     it.parse::<u16>()
                         .expect("CHORES_POSTGRES_PORT must be a valid port number")
                 })
-                .unwrap_or(3306),
+                .unwrap_or(5432),
             user: var("CHORES_POSTGRES_USER").expect("CHORES_POSTGRES_USER must be set"),
             password: var("CHORES_POSTGRES_PASSWORD").ok().map(Hidden::from),
             database: var("CHORES_POSTGRES_DATABASE")

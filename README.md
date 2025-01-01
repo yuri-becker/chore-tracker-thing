@@ -48,20 +48,20 @@ OIDC-compatible authentication backend like Authelia.
 
 ### Environment Variables
 
-| Name                          | Description                                                         | Default     |
-|-------------------------------|---------------------------------------------------------------------|-------------|
-| `CHORES_HOST`                 | The URL under which the app will be available.                      | *required*  |
-| `CHORES_SECRET`               | Server-side secret for encrypting cookies. Set to something random. | *required*  |
-| `CHORES_PORT`                 | Port under which the backend should run.                            | `8001`      |
-| `CHORES_MODE`                 | `debug` or `prod`                                                   | `prod`      |
-| `CHORES_POSTGRES_HOST`        | Host on which Postgres runs.                                        | `127.0.0.1` |
-| `CHORES_POSTGRES_PORT`        | Port on which Postgres runs.                                        | `3306`      |
-| `CHORES_POSTGRES_USER`        | User to use for the Postgres connection.                            | *required*  | 
-| `CHORES_POSTGRES_PASSWORD`    | Password to use for the Postgres connection                         | *optional*  | 
-| `CHORES_POSTGRES_DATABASE`    | Postgres database to use.                                           | *required*  |
-| `CHORES_OIDC_ENDPOINT`        | URL on which the OIDC Provider runs on.                             | *required*  |                             
-| `CHORES_OIDC_CLIENT_ID`       | OIDC Client ID for this application                                 | *required*  |
-| `CHORES_OIDC_CLIENT_PASSWORD` | OIDC Client Secret for this application                             | *required*  |
+| Name                          | Description                                                                                                 | Default     |
+|-------------------------------|-------------------------------------------------------------------------------------------------------------|-------------|
+| `CHORES_HOST`                 | The URL under which the app will be available.                                                              | *required*  |
+| `CHORES_SECRET`               | Server-side secret for encrypting cookies. Set to something random. Generate with `openssl rand -base64 32` | *required*  |
+| `CHORES_PORT`                 | Port under which the backend should run.                                                                    | `8001`      |
+| `CHORES_MODE`                 | `debug` or `prod`                                                                                           | `prod`      |
+| `CHORES_POSTGRES_HOST`        | Host on which Postgres runs.                                                                                | `127.0.0.1` |
+| `CHORES_POSTGRES_PORT`        | Port on which Postgres runs.                                                                                | `5432`      |
+| `CHORES_POSTGRES_USER`        | User to use for the Postgres connection.                                                                    | *required*  | 
+| `CHORES_POSTGRES_PASSWORD`    | Password to use for the Postgres connection                                                                 | *optional*  | 
+| `CHORES_POSTGRES_DATABASE`    | Postgres database to use.                                                                                   | *required*  |
+| `CHORES_OIDC_ENDPOINT`        | URL on which the OIDC Provider runs on.                                                                     | *required*  |                             
+| `CHORES_OIDC_CLIENT_ID`       | OIDC Client ID for this application                                                                         | *required*  |
+| `CHORES_OIDC_CLIENT_PASSWORD` | OIDC Client Secret for this application                                                                     | *required*  |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -123,6 +123,7 @@ and then run the backend with
 ```sh
 cargo run
 ```
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## License
