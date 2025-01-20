@@ -22,6 +22,7 @@ impl Model {
 pub enum Relation {
     HouseholdMemberships,
     TodoCompletions,
+    CreatedInvites,
 }
 
 impl RelationTrait for Relation {
@@ -34,6 +35,10 @@ impl RelationTrait for Relation {
             Self::TodoCompletions => Entity::belongs_to(super::todo::Entity)
                 .from(Column::Id)
                 .to(super::todo::Column::CompletedBy)
+                .into(),
+            Self::CreatedInvites => Entity::belongs_to(super::invite::Entity)
+                .from(Column::Id)
+                .to(super::invite::Column::CreatedBy)
                 .into(),
         }
     }
@@ -48,6 +53,12 @@ impl Related<super::household_member::Entity> for Entity {
 impl Related<super::todo::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TodoCompletions.def()
+    }
+}
+
+impl Related<super::invite::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::CreatedInvites.def()
     }
 }
 

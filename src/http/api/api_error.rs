@@ -12,6 +12,8 @@ pub enum ApiError {
     InvalidRequest(&'static str),
     #[response(status = 500)]
     DatabaseError(()),
+    #[response(status = 500)]
+    InternalServerError(()),
 }
 
 impl From<DbErr> for ApiError {

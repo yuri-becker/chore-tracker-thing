@@ -14,6 +14,7 @@ pub struct Model {
 pub enum Relation {
     Members,
     Tasks,
+    Invites,
 }
 
 impl RelationTrait for Relation {
@@ -26,6 +27,10 @@ impl RelationTrait for Relation {
             Self::Tasks => Entity::belongs_to(super::task::Entity)
                 .from(Column::Id)
                 .to(super::task::Column::HouseholdId)
+                .into(),
+            Self::Invites => Entity::belongs_to(super::invite::Entity)
+                .from(Column::Id)
+                .to(super::invite::Column::HouseholdId)
                 .into(),
         }
     }
@@ -40,6 +45,12 @@ impl Related<super::household_member::Entity> for Entity {
 impl Related<super::task::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Tasks.def()
+    }
+}
+
+impl Related<super::invite::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Invites.def()
     }
 }
 

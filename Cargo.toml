@@ -15,6 +15,8 @@ sea-orm = { version = "1.1.2", features = ["mock", "sqlx-postgres", "runtime-tok
 sea-orm-migration = { version = "1.1.2", features = ["sqlx-postgres", "runtime-actix-native-tls", "with-chrono", "with-json", "with-uuid"] }
 url = "2.5.2"
 uuid = { version = "1.11.0", features = ["v7"] }
+rust-argon2 = "2.1.0"
+base64 = "0.22.1"
 
 [dev-dependencies]
 husky-rs = "0.1.2"
