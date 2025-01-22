@@ -7,30 +7,34 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager.create_table(
-            Table::create()
-                .table(Invite::Table)
-                .col(pk_uuid(Invite::Id))
-                .col(uuid(Invite::HouseholdId))
-                .col(ColumnDef::new(Invite::SecretDigest).string().not_null())
-                .col(ColumnDef::new(Invite::CreatedBy).uuid().null())
-                .col(ColumnDef::new(Invite::ValidUntil).date_time().not_null())
-                .foreign_key(ForeignKey::create()
-                    .name("FK_INVITES_HOUSEHOLDS")
-                    .from(Invite::Table, Invite::HouseholdId)
-                    .to(Household::Table, Household::Id)
-                    .on_delete(ForeignKeyAction::Cascade)
-                    .on_update(ForeignKeyAction::Cascade),
-                )
-                .foreign_key(ForeignKey::create()
-                    .name("FK_INVITES_USERS")
-                    .from(Invite::Table, Invite::CreatedBy)
-                    .to(User::Table, User::Id)
-                    .on_delete(ForeignKeyAction::SetNull)
-                    .on_update(ForeignKeyAction::Cascade),
-                )
-                .to_owned()
-        ).await
+        manager
+            .create_table(
+                Table::create()
+                    .table(Invite::Table)
+                    .col(pk_uuid(Invite::Id))
+                    .col(uuid(Invite::HouseholdId))
+                    .col(ColumnDef::new(Invite::SecretDigest).string().not_null())
+                    .col(ColumnDef::new(Invite::CreatedBy).uuid().null())
+                    .col(ColumnDef::new(Invite::ValidUntil).date_time().not_null())
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("FK_INVITES_HOUSEHOLDS")
+                            .from(Invite::Table, Invite::HouseholdId)
+                            .to(Household::Table, Household::Id)
+                            .on_delete(ForeignKeyAction::Cascade)
+                            .on_update(ForeignKeyAction::Cascade),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("FK_INVITES_USERS")
+                            .from(Invite::Table, Invite::CreatedBy)
+                            .to(User::Table, User::Id)
+                            .on_delete(ForeignKeyAction::SetNull)
+                            .on_update(ForeignKeyAction::Cascade),
+                    )
+                    .to_owned(),
+            )
+            .await
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {

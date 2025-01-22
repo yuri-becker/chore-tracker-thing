@@ -4,7 +4,7 @@ use crate::http::oidc::oidc_error::OidcError;
 use crate::http::oidc::oidc_error::OidcError::{OidcEndpointUnreachable, Unauthorized};
 use crate::infrastructure::database::Database;
 use crate::infrastructure::oidc_client::{OidcClient, UserInfo};
-use log::{debug, warn};
+use log::{debug, error, warn};
 use openid::Token;
 use rocket::http::private::cookie::CookieBuilder;
 use rocket::http::{CookieJar, SameSite};
@@ -34,6 +34,7 @@ pub async fn callback(
             let bearer = oidc_client
                 .request_token(&success.code)
                 .await
+                .inspect_err(|err| error!("Could not request OIDC token: {:?}", err))
                 .map_err(|_| OidcEndpointUnreachable(()))?;
             let mut token = Token::from(bearer.clone());
             let id_token = token.id_token.as_mut().ok_or(OidcEndpointUnreachable(()))?;
@@ -46,12 +47,14 @@ pub async fn callback(
             let user_info = oidc_client
                 .request_userinfo_custom::<UserInfo>(&token)
                 .await
+                .inspect_err(|err| error!("Could not request userinfo: {:?}", err))
                 .map_err(|_| OidcEndpointUnreachable(()))?;
             debug!("userinfo received: {:?}", user_info);
             let display_name = user_info
                 .name
                 .filter(|it| !it.is_empty())
-                .unwrap_or(user_info.preferred_username);
+                .or(user_info.preferred_username)
+                .unwrap_or(user_info.sub.clone());
             let user = oidc_user::get_or_register(database, user_info.sub, display_name)
                 .await
                 .map_err(|err| {

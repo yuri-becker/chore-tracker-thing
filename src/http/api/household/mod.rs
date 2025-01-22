@@ -2,10 +2,10 @@ use rocket::{routes, Route};
 
 mod create;
 mod get;
-mod response;
-mod task;
 mod invite;
 mod join;
+mod response;
+mod task;
 
 pub fn routes() -> Vec<Route> {
     routes![

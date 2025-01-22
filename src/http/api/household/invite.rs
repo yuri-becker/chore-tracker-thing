@@ -1,5 +1,5 @@
-use crate::domain::invite_secret::InviteSecret;
 use crate::domain::invite;
+use crate::domain::invite_secret::InviteSecret;
 use crate::http::api::api_error::ApiError;
 use crate::http::api::guards::logged_in_user::LoggedInUser;
 use crate::http::api::UuidParam;
@@ -8,8 +8,8 @@ use chrono::{DateTime, TimeDelta, Utc};
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::{error, get};
-use sea_orm::ActiveValue::Set;
 use sea_orm::ActiveModelTrait;
+use sea_orm::ActiveValue::Set;
 use std::ops::Add;
 use uuid::Uuid;
 
@@ -53,4 +53,3 @@ pub async fn generate_invite(
         valid_until,
     }))
 }
-

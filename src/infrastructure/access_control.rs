@@ -29,6 +29,9 @@ impl Fairing for AccessControl {
     }
 
     async fn on_response<'r>(&self, _: &'r Request<'_>, res: &mut Response<'r>) {
-        res.set_header(Header::new("Access-Control-Allow-Origin", self.host.clone()));
+        res.set_header(Header::new(
+            "Access-Control-Allow-Origin",
+            self.host.clone(),
+        ));
     }
 }

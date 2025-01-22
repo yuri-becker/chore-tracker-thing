@@ -11,14 +11,14 @@ pub struct Model {
     pub secret_digest: String,
     pub household_id: Uuid,
     pub created_by: Uuid,
-    pub valid_until: NaiveDateTime
+    pub valid_until: NaiveDateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
     Household,
     CreatedBy,
-    JoinedUsers
+    JoinedUsers,
 }
 
 impl RelationTrait for Relation {
@@ -29,7 +29,7 @@ impl RelationTrait for Relation {
             Self::JoinedUsers => Entity::belongs_to(super::household_member::Entity)
                 .from(Column::Id)
                 .to(super::household_member::Column::JoinedViaInvite)
-                .into()
+                .into(),
         }
     }
 }
@@ -53,4 +53,3 @@ impl Related<super::household_member::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
-

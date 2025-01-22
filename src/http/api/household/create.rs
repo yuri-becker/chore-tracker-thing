@@ -7,8 +7,8 @@ use crate::infrastructure::database::Database;
 use rocket::post;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
-use sea_orm::{ActiveModelTrait, NotSet};
 use sea_orm::ActiveValue::Set;
+use sea_orm::{ActiveModelTrait, NotSet};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]

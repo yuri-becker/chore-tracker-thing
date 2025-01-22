@@ -9,14 +9,14 @@ pub struct Model {
     pub user_id: Uuid,
     #[sea_orm(primary_key)]
     pub household_id: Uuid,
-    pub joined_via_invite: Option<Uuid>
+    pub joined_via_invite: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
     User,
     Household,
-    JoinedViaInvite
+    JoinedViaInvite,
 }
 
 impl RelationTrait for Relation {
@@ -24,7 +24,7 @@ impl RelationTrait for Relation {
         match self {
             Relation::User => Entity::has_one(super::user::Entity).into(),
             Relation::Household => Entity::has_one(super::household::Entity).into(),
-            Relation::JoinedViaInvite => Entity::has_one(super::invite::Entity).into()
+            Relation::JoinedViaInvite => Entity::has_one(super::invite::Entity).into(),
         }
     }
 }

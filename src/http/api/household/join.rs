@@ -1,19 +1,19 @@
-use rocket::serde::{Deserialize, Serialize};
-use rocket::post;
-use rocket::serde::json::Json;
-use uuid::Uuid;
-use log::debug;
-use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, ColumnTrait, Condition, EntityTrait, PaginatorTrait, QueryFilter};
-use domain::household;
 use crate::domain;
-use crate::domain::{household_member, invite};
 use crate::domain::invite_secret::InviteSecret;
+use crate::domain::{household_member, invite};
 use crate::http::api::api_error::ApiError;
-use crate::http::api::FromModel;
 use crate::http::api::guards::logged_in_user::LoggedInUser;
 use crate::http::api::household::response::Household;
+use crate::http::api::FromModel;
 use crate::infrastructure::database::Database;
+use domain::household;
+use log::debug;
+use rocket::post;
+use rocket::serde::json::Json;
+use rocket::serde::{Deserialize, Serialize};
+use sea_orm::ActiveValue::Set;
+use sea_orm::{ActiveModelTrait, ColumnTrait, Condition, EntityTrait, PaginatorTrait, QueryFilter};
+use uuid::Uuid;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
@@ -39,8 +39,9 @@ pub async fn join(
 
     let valid = InviteSecret {
         secret: request.secret.clone(),
-        digest: invite.secret_digest.clone()
-    }.validate();
+        digest: invite.secret_digest.clone(),
+    }
+    .validate();
     if !valid {
         return Err(ApiError::DatabaseError(()));
     }
@@ -49,18 +50,22 @@ pub async fn join(
         .filter(
             Condition::all()
                 .add(household_member::Column::HouseholdId.eq(invite.household_id))
-                .add(household_member::Column::UserId.eq(user.id))
-        ).count(db.conn())
-        .await? > 0;
+                .add(household_member::Column::UserId.eq(user.id)),
+        )
+        .count(db.conn())
+        .await?
+        > 0;
     if user_already_in_household {
-        return Err(ApiError::Conflict(()))
+        return Err(ApiError::Conflict(()));
     }
 
     household_member::ActiveModel {
         user_id: Set(user.id),
         household_id: Set(invite.household_id),
-        joined_via_invite: Set(Some(invite.id))
-    }.insert(db.conn()).await?;
+        joined_via_invite: Set(Some(invite.id)),
+    }
+    .insert(db.conn())
+    .await?;
 
     let household = household::Entity::find_by_id(invite.household_id)
         .one(db.conn())

@@ -44,11 +44,10 @@ impl OidcClient {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct UserInfo {
-    pub auth_time: u64,
-    pub client_id: String,
+    #[serde(default)]
     pub groups: Vec<String>,
     pub iss: String,
-    pub preferred_username: String,
+    pub preferred_username: Option<String>,
     pub sub: String,
     pub name: Option<String>,
 }

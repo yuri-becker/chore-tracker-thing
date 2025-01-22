@@ -10,9 +10,22 @@ services:
       POSTGRES_DB: ${CHORES_POSTGRES_DATABASE}
       POSTGRES_USER: ${CHORES_POSTGRES_USER}
       POSTGRES_PASSWORD: ${CHORES_POSTGRES_PASSWORD}
+  etcd:
+    image: bitnami/etcd:latest
+    environment:
+      ALLOW_NONE_AUTHENTICATION: yes
+  dex:
+    image: dexidp/dex:latest
+    depends_on:
+      - etcd
+    ports:
+      - "8003:5556"
+    volumes:
+      - "./dex.yaml:/etc/dex/config.docker.yaml"
   backend:
     image: rust:1
     depends_on:
+      - dex
       - postgres
     environment:
       CHORES_POSTGRES_HOST: "postgres"
@@ -25,3 +38,4 @@ services:
     command: ["cargo", "run", "--target-dir", "target.docker"]
 volumes:
   postgres-data:
+  etcd-data:
