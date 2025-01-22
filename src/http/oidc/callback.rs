@@ -13,11 +13,11 @@ use rocket::serde::json::serde_json::json;
 use rocket::{get, State};
 
 #[get("/callback")]
-pub async fn callback<'r>(
+pub async fn callback(
     callback_query: CallbackQuery,
     oidc_client: &State<OidcClient>,
     database: &State<Database>,
-    cookie_jar: &'r CookieJar<'_>,
+    cookie_jar: &CookieJar<'_>,
 ) -> Result<Redirect, OidcError> {
     match callback_query {
         CallbackQuery::Error(error) => {

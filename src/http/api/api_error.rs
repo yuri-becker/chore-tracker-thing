@@ -8,6 +8,8 @@ pub enum ApiError {
     NotInHousehold(()),
     #[response(status = 404)]
     NotFound(()),
+    #[response(status = 409)]
+    Conflict(()),
     #[response(status = 422)]
     InvalidRequest(&'static str),
     #[response(status = 500)]

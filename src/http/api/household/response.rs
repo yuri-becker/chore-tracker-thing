@@ -16,14 +16,14 @@ pub struct Member {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
-pub struct Response {
+pub struct Household {
     pub id: Uuid,
     pub name: String,
     pub members: Vec<Member>,
 }
 
 #[async_trait]
-impl FromModel<household::Model> for Response {
+impl FromModel<household::Model> for Household {
     async fn from_model(db: &Database, value: household::Model) -> Result<Self, DbErr> {
         let members = value
             .find_related(household_member::Entity)

@@ -5,12 +5,14 @@ mod get;
 mod response;
 mod task;
 mod invite;
+mod join;
 
 pub fn routes() -> Vec<Route> {
     routes![
         create::create,
         get::get,
-        invite::get_invite,
+        invite::generate_invite,
+        join::join,
         task::complete::complete,
         task::create::create,
         task::get::get,
