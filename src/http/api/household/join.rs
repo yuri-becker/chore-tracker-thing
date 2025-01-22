@@ -33,6 +33,7 @@ pub async fn join(
         ApiError::NotFound(())
     })?;
     let invite = invite::Entity::find_by_id(invite_code)
+        .filter(invite::Column::ValidUntil.gte(chrono::Utc::now()))
         .one(db.conn())
         .await?;
     let invite = invite.ok_or(ApiError::NotFound(()))?;
