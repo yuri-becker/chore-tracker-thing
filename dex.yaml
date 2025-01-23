@@ -1,0 +1,29 @@
+# Dex configuration for local development
+# See https://dexidp.io/docs/configuration/
+issuer: http://127.0.0.1:8003
+storage:
+  type: etcd
+  config:
+    endpoints:
+      - http://etcd:2379
+    namespace: dex/
+web:
+  http: :5556
+staticClients:
+  - id: chore-tracker-thing
+    redirectURIs:
+      - 'http://127.0.0.1:8000/oidc/callback'
+    name: 'Chore Tracker Thing (local)'
+    secret: super_secret_secret
+enablePasswordDB: true
+staticPasswords:
+  - email: "a"
+    # echo password | htpasswd -BinC 10 admin | cut -d: -f2
+    hash: "$2y$10$4cyH0IOaYw4m4wISZ8b/OO2sHaWBYZGTm8gjlO00sgih2KXJe0W.6"
+    username: "Atlantic Cod"
+    userID: "usera"
+
+  - email: "b"
+    hash: "$2y$10$4cyH0IOaYw4m4wISZ8b/OO2sHaWBYZGTm8gjlO00sgih2KXJe0W.6"
+    username: "Barracuda"
+    userID: "userb"

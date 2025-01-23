@@ -7,6 +7,8 @@ mod m000003_add_column_display_name;
 mod m000004_create_tasks;
 mod m000005_create_todos;
 mod m000006_create_invites;
+mod m000007_add_column_joined_via_invite;
+
 pub struct Migrator;
 
 #[async_trait::async_trait]
@@ -19,6 +21,7 @@ impl MigratorTrait for Migrator {
             Box::new(m000004_create_tasks::Migration),
             Box::new(m000005_create_todos::Migration),
             Box::new(m000006_create_invites::Migration),
+            Box::new(m000007_add_column_joined_via_invite::Migration),
         ]
     }
 }

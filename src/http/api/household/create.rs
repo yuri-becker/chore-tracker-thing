@@ -1,14 +1,14 @@
 use crate::domain;
 use crate::http::api::api_error::ApiError;
 use crate::http::api::guards::logged_in_user::LoggedInUser;
-use crate::http::api::household::response::Response;
+use crate::http::api::household::response::Household;
 use crate::http::api::FromModel;
 use crate::infrastructure::database::Database;
 use rocket::post;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
-use sea_orm::ActiveModelTrait;
 use sea_orm::ActiveValue::Set;
+use sea_orm::{ActiveModelTrait, NotSet};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -22,7 +22,7 @@ pub async fn create(
     user: LoggedInUser,
     request: Json<Request>,
     db: &Database,
-) -> Result<Json<Response>, ApiError> {
+) -> Result<Json<Household>, ApiError> {
     let household = domain::household::ActiveModel {
         id: Set(Uuid::now_v7()),
         name: Set(request.name.clone()),
@@ -33,11 +33,12 @@ pub async fn create(
     domain::household_member::ActiveModel {
         user_id: Set(user.id),
         household_id: Set(household.id),
+        joined_via_invite: NotSet,
     }
     .insert(db.conn())
     .await
     .map_err(ApiError::from)?;
-    Response::from_model(db, household)
+    Household::from_model(db, household)
         .await
         .map(Json::from)
         .map_err(ApiError::from)

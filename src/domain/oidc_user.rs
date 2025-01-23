@@ -90,7 +90,7 @@ async fn update_display_name(
     if user
         .display_name
         .clone()
-        .map_or(false, |it| it.eq(&display_name))
+        .is_some_and(|it| it.eq(&display_name))
     {
         Ok(user)
     } else {

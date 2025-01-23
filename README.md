@@ -80,18 +80,10 @@ OIDC-compatible authentication backend like Authelia.
 
 ### Set-up
 
-After installing the [Prerequisites](#prerequisites) and cloning the project, create a file called `.env.local` and
-define the following values in it:
+Install the [Prerequisites](#prerequisites) and clone the project.
 
-```env
-CHORES_OIDC_ENDPOINT=
-CHORES_OIDC_CLIENT_ID=
-CHORES_OIDC_CLIENT_PASSWORD=
-CHORES_SECRET=
-```
-
-Consult [Environment Variables](#environment-variables) for more guidance on what you set this to. Please note that not
-all environment variables marked as required need to be set here, as there is another, shared `.env` for development.
+If you need to override any [Environment Variables](#environment-variables), create a `.env.local` and set those in there. You would only need this if you,
+for example, want to test with a production authentication provider, or you don't want to run postgres via docker compose.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -112,10 +104,10 @@ If you want to run the database and backend via Docker (recommended if you don't
 docker compose up
 ```
 
-Otherwise, you can run the database only via
+Otherwise, you can run only the database and authentication endpoint (dex) via
 
 ```sh
-docker compose up postgres
+docker compose up postgres dex
 ```
 
 and then run the backend with
@@ -123,6 +115,10 @@ and then run the backend with
 ```sh
 cargo run
 ```
+
+### Credentials
+
+There are two users, both have the password `123`, for the e-mail address, enter either just `a` or `b`.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
