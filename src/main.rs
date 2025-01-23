@@ -1,5 +1,6 @@
 extern crate core;
 
+use crate::http::api::guards::logged_in_user::OidcLoggedInUserResolver;
 use crate::http::api::household;
 use crate::http::oidc;
 use crate::infrastructure::access_control::AccessControl;
@@ -14,6 +15,8 @@ mod domain;
 mod http;
 mod infrastructure;
 mod migration;
+#[cfg(test)]
+mod test_environment;
 
 #[launch]
 async fn rocket() -> _ {
@@ -31,6 +34,7 @@ async fn rocket() -> _ {
         .mount("/oidc", oidc::routes())
         .mount("/api/household", household::routes())
         .manage(OidcClient::new(&config).await)
+        .manage(OidcLoggedInUserResolver::new_state())
         .manage(database)
         .manage(config)
 }

@@ -43,3 +43,31 @@ pub async fn create(
         .map(Json::from)
         .map_err(ApiError::from)
 }
+
+#[cfg(test)]
+mod test {
+    use crate::test_environment::TestEnvironment;
+    use rocket::http::Status;
+    use rocket::serde::json::json;
+    use rocket::{async_test, routes, uri};
+
+    #[async_test]
+    async fn test_create_household() {
+        let env = TestEnvironment::builder()
+            .await
+            .mount(routes![super::create]);
+        let env = env.launch().await;
+
+        let header = env.header_user_a();
+        let response = env
+            .post(uri!(super::create))
+            .header(header)
+            .json(&json!( {
+              "name": "Whacky House"
+            }))
+            .dispatch()
+            .await;
+
+        assert_eq!(response.status(), Status::Ok);
+    }
+}

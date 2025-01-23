@@ -5,6 +5,7 @@ use rocket::request::{FromRequest, Outcome};
 use rocket::Request;
 use sea_orm::{ConnectOptions, DatabaseConnection};
 
+#[derive(Debug)]
 pub struct Database {
     connection: DatabaseConnection,
 }
@@ -17,7 +18,11 @@ impl Database {
 
 impl Database {
     pub async fn connect(config: &Config) -> Database {
-        let opts = ConnectOptions::new(config.postgres.build_connection_string());
+        Self::connect_string(config.postgres.build_connection_string()).await
+    }
+
+    async fn connect_string(connection: String) -> Database {
+        let opts = ConnectOptions::new(connection);
         let it = sea_orm::Database::connect(opts)
             .await
             .expect("Could not connect to database");
@@ -44,19 +49,16 @@ impl<'r> FromRequest<'r> for &'r Database {
 #[cfg(test)]
 mod test {
     use crate::infrastructure::database::Database;
-    use sea_orm::{DatabaseBackend, MockDatabase};
+    use testcontainers_modules::postgres::Postgres;
+    use testcontainers_modules::testcontainers::ContainerAsync;
 
     impl Database {
-        pub fn mock() -> MockDatabase {
-            MockDatabase::new(DatabaseBackend::Postgres)
-        }
-    }
-
-    impl From<MockDatabase> for Database {
-        fn from(val: MockDatabase) -> Self {
-            Database {
-                connection: val.into_connection(),
-            }
+        pub async fn connect_to_testcontainer(container: &ContainerAsync<Postgres>) -> Database {
+            let connection_string = format!(
+                "postgres://postgres:postgres@127.0.0.1:{}/postgres",
+                container.get_host_port_ipv4(5432).await.unwrap()
+            );
+            Database::connect_string(connection_string).await
         }
     }
 }
