@@ -5,6 +5,7 @@ import { NavLink } from 'react-router'
 import { HouseholdContext } from '../global/household-contextt.tsx'
 import { MainMenuContext } from '../global/main-menu.context.tsx'
 import { useUser } from '../global/use-user.tsx'
+import './main-menu.css'
 
 export const MainMenu = () => {
   const { isMenuOpen, setIsMenuOpen } = useContext(MainMenuContext)

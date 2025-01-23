@@ -2,53 +2,6 @@ form div[role="alert"] {
     color: var(--pico-form-element-invalid-active-border-color);
 }
 
-details[role="dropdown"] summary[role="button"]::after {
-    background-image: none;
-}
-
-aside {
-    position: absolute;
-    top: 0;
-    left: 0;
-    transform: translateX(-101%);
-    background-color: var(--pico-background-color);
-    height: 100%;
-    width: 20em;
-    transition: transform var(--pico-transition);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-}
-
-aside.open {
-    transform: translateX(0);
-}
-
-aside div {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-}
-
-aside div button {
-    justify-self: flex-end;
-    display: flex;
-}
-
-aside div button svg {
-    align-self: flex-start;
-}
-
-aside nav ul {
-    width: 100%;
-    padding-left: 1em;
-}
-
-aside ul li {
-    background: var(--pico-secondary-background);
-    margin-top: 0.15em;
-}
-
 button.flat {
     border: 0;
 }
