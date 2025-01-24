@@ -2,3 +2,4 @@
 /target.docker
 .DS_STORE
 .env.local
+tarpaulin-report.html

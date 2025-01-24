@@ -2,6 +2,7 @@ use crate::domain::user;
 use crate::http::api::guards::logged_in_user::test::TestLoggedInUserResolver;
 use crate::infrastructure::database::Database;
 use crate::migration;
+use ctor::dtor;
 use rocket::config::SecretKey;
 use rocket::http::Header;
 use rocket::local::asynchronous::Client;
@@ -17,6 +18,24 @@ use uuid::Uuid;
 
 static POSTGRES: OnceCell<ContainerAsync<postgres::Postgres>> = OnceCell::const_new();
 static SECRET: &str = "sip-thickness-canister-uptake-tinwork-starless-reporter-tiling-tasting";
+
+#[dtor]
+fn after_all() {
+    // we need to manually stop and remove the container, since the OnceCell never gets dropped
+    let id = POSTGRES.get().unwrap().id();
+    std::process::Command::new("docker")
+        .args(["stop", id])
+        .spawn()
+        .unwrap()
+        .wait()
+        .unwrap();
+    std::process::Command::new("docker")
+        .args(["remove", id])
+        .spawn()
+        .unwrap()
+        .wait()
+        .unwrap();
+}
 
 pub struct TestEnvironmentBuilder {
     rocket: Rocket<Build>,
@@ -44,6 +63,27 @@ impl TestEnvironmentBuilder {
     }
 }
 
+/// Common test infrastructure, starting a Rocket instance and necessary testcontainer(s).
+/// It derefs to a rocket testing client and provides two test users.
+///
+/// ## Example
+/// ```rust,norun
+/// #[async_test]
+/// async fn test_create_household() {
+///     let env = TestEnvironment::builder()
+///         .await
+///         .mount(routes![super::get_household])
+///         .launch()
+///         .await;
+///
+///     let response = env
+///         .get(uri!(super::get_household))
+///         .header(env.header_user_a())
+///         .dispatch()
+///         .await;
+///
+///     assert_eq!(response.status(), Status::Ok);
+/// ```
 pub struct TestEnvironment {
     pub client: Client,
     pub user_a: Uuid,
@@ -71,7 +111,7 @@ impl TestEnvironment {
                 secret_key: SecretKey::from(SECRET.as_bytes()),
                 ..rocket::Config::default()
             })
-            .manage::<Database>(database)
+            .manage(database)
             .manage(TestLoggedInUserResolver::new_state());
 
         TestEnvironmentBuilder {

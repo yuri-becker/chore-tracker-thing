@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 base64 = "0.22.1"
 chrono = "0.4.39"
+ctor = "0.2.9"
 dotenv = "0.15.0"
 log = "0.4.22"
 openid = "0.15.0"
