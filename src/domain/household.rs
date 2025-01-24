@@ -1,5 +1,9 @@
+use crate::domain;
+use crate::infrastructure::database::Database;
 use rocket::serde::{Deserialize, Serialize};
 use sea_orm::entity::prelude::*;
+use sea_orm::ActiveValue::Set;
+use sea_orm::NotSet;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
@@ -55,3 +59,20 @@ impl Related<super::invite::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+pub async fn create(db: &Database, name: String, user: Uuid) -> Result<Model, DbErr> {
+    let household = ActiveModel {
+        id: Set(Uuid::now_v7()),
+        name: Set(name),
+    }
+    .insert(db.conn())
+    .await?;
+    domain::household_member::ActiveModel {
+        user_id: Set(user),
+        household_id: Set(household.id),
+        joined_via_invite: NotSet,
+    }
+    .insert(db.conn())
+    .await?;
+    Ok(household)
+}

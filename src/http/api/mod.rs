@@ -19,6 +19,7 @@ where
     async fn from_model(db: &Database, model: TModel) -> Result<Self, DbErr>;
 }
 
+#[derive(Debug)]
 struct UuidParam(Uuid);
 
 impl Deref for UuidParam {
@@ -39,5 +40,24 @@ impl FromParam<'_> for UuidParam {
                 Status::BadRequest
             })
             .map(UuidParam)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::http::api::UuidParam;
+    use rocket::http::Status;
+    use rocket::request::FromParam;
+
+    #[test]
+    fn test_throws_bad_request_when_invalid_uuid() {
+        let err = UuidParam::from_param("no-uuid").expect_err("Should have errored.");
+        assert_eq!(err, Status::BadRequest);
+    }
+
+    #[test]
+    fn test_returns_uuid() {
+        let uuid = UuidParam::from_param("0194983b-debf-777e-8646-7b0739c208b8");
+        assert!(uuid.is_ok());
     }
 }

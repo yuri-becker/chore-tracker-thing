@@ -120,12 +120,16 @@ impl LoggedInUserResolver for OidcLoggedInUserResolver {
 
 #[cfg(test)]
 pub mod test {
+    use crate::http::api::api_error::ApiError;
     use crate::http::api::guards::logged_in_user::{
         LoggedInUser, LoggedInUserResolver, LoggedInUserResolverState,
     };
+    use crate::http::api::UuidParam;
+    use crate::infrastructure::database::Database;
     use crate::migration::async_trait::async_trait;
+    use crate::test_environment::{TestEnvironment, TestUser};
     use rocket::http::Status;
-    use rocket::Request;
+    use rocket::{async_test, get, routes, Request, State};
     use uuid::Uuid;
 
     pub struct TestLoggedInUserResolver {}
@@ -145,5 +149,63 @@ pub mod test {
                 id: Uuid::parse_str(user).unwrap(),
             })
         }
+    }
+
+    #[get("/<household_id>")]
+    async fn endpoint(
+        user: LoggedInUser,
+        db: &State<Database>,
+        household_id: UuidParam,
+    ) -> Result<&'static str, ApiError> {
+        user.in_household(db, *household_id).await?;
+        Ok("Hello")
+    }
+    #[async_test]
+    async fn test_throws_unauthorized_when_no_user_given() {
+        let env = TestEnvironment::builder()
+            .await
+            .mount(routes![endpoint])
+            .launch()
+            .await;
+
+        let response = env.get(format!("/{}", Uuid::now_v7())).dispatch().await;
+        assert_eq!(response.status(), Status::Unauthorized);
+    }
+
+    #[async_test]
+    async fn test_in_household_throws_forbidden_when_not_in_household() {
+        let env = TestEnvironment::builder()
+            .await
+            .mount(routes![endpoint])
+            .launch()
+            .await;
+
+        let household = env.create_household(None, TestUser::B).await;
+
+        let response = env
+            .get(format!("/{}", household.id))
+            .header(env.header_user_a())
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Forbidden);
+    }
+
+    #[async_test]
+    async fn test_passes_when_in_household() {
+        let env = TestEnvironment::builder()
+            .await
+            .mount(routes![endpoint])
+            .launch()
+            .await;
+
+        let household = env
+            .create_household(Some("My Household"), TestUser::A)
+            .await;
+        let response = env
+            .get(format!("/{}", household.id))
+            .header(env.header_user_a())
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
     }
 }

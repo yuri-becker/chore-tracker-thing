@@ -30,3 +30,23 @@ pub async fn migrate(db: &Database) {
         .await
         .expect("Migration failed")
 }
+
+#[cfg(test)]
+mod test {
+    use crate::migration::Migrator;
+    use crate::test_environment::TestEnvironment;
+    use rocket::async_test;
+    use sea_orm_migration::MigratorTrait;
+
+    #[async_test]
+    async fn test_down_migration() {
+        let env = TestEnvironment::builder().await.launch().await;
+
+        Migrator::down(env.database().conn(), None)
+            .await
+            .expect("Down Migration failed.");
+        Migrator::up(env.database().conn(), None)
+            .await
+            .expect("Up Migration failed.");
+    }
+}

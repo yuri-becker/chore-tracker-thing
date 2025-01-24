@@ -53,3 +53,62 @@ pub async fn generate_invite(
         valid_until,
     }))
 }
+
+#[cfg(test)]
+mod test {
+    use crate::domain::{household, household_member};
+    use crate::http::api::household::invite::Response;
+    use crate::test_environment::TestEnvironment;
+    use rocket::http::Status;
+    use rocket::{async_test, routes};
+    use sea_orm::ActiveValue::Set;
+    use sea_orm::{ActiveModelTrait, NotSet};
+    use uuid::Uuid;
+
+    #[async_test]
+    async fn test_generate_invite() {
+        let env = TestEnvironment::builder()
+            .await
+            .mount(routes![super::generate_invite])
+            .launch()
+            .await;
+
+        let household = household::ActiveModel {
+            id: Set(Uuid::now_v7()),
+            name: Set("My Household".to_string()),
+        }
+        .insert(env.database().conn())
+        .await
+        .unwrap();
+
+        household_member::ActiveModel {
+            household_id: Set(household.id),
+            user_id: Set(env.user_a),
+            joined_via_invite: NotSet,
+        }
+        .insert(env.database().conn())
+        .await
+        .unwrap();
+
+        let invite_1 = env
+            .get(format!("/{}/invite", household.id))
+            .header(env.header_user_a())
+            .dispatch()
+            .await;
+
+        assert_eq!(invite_1.status(), Status::Ok);
+        let invite_1: Response = invite_1.into_json().await.unwrap();
+
+        let invite_2 = env
+            .get(format!("/{}/invite", household.id))
+            .header(env.header_user_a())
+            .dispatch()
+            .await;
+
+        assert_eq!(invite_2.status(), Status::Ok);
+        let invite_2: Response = invite_2.into_json().await.unwrap();
+
+        assert_ne!(invite_1.invite_code, invite_2.invite_code);
+        assert_ne!(invite_1.secret, invite_2.secret);
+    }
+}

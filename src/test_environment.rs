@@ -1,9 +1,11 @@
-use crate::domain::user;
+use crate::domain::household::Model;
+use crate::domain::{household, user};
 use crate::http::api::guards::logged_in_user::test::TestLoggedInUserResolver;
 use crate::infrastructure::database::Database;
 use crate::migration;
 use ctor::dtor;
 use rocket::config::SecretKey;
+use rocket::fairing::Fairing;
 use rocket::http::Header;
 use rocket::local::asynchronous::Client;
 use rocket::tokio::sync::OnceCell;
@@ -21,7 +23,10 @@ static SECRET: &str = "sip-thickness-canister-uptake-tinwork-starless-reporter-t
 
 #[dtor]
 fn after_all() {
-    // we need to manually stop and remove the container, since the OnceCell never gets dropped
+    // We need to manually stop and remove the container, since the OnceCell never gets dropped.
+    // Just dropping here doesn't work since we are not in a tokio runtime, thus the possible
+    // interactions with POSTGRES are limited.
+
     let id = POSTGRES.get().unwrap().id();
     std::process::Command::new("docker")
         .args(["stop", id])
@@ -49,6 +54,11 @@ impl TestEnvironmentBuilder {
         R: Into<Vec<Route>>,
     {
         self.rocket = self.rocket.mount("/", routes);
+        self
+    }
+
+    pub fn attach<F: Fairing>(mut self, fairing: F) -> Self {
+        self.rocket = self.rocket.attach(fairing);
         self
     }
 
@@ -162,6 +172,16 @@ impl TestEnvironment {
     pub fn database(&self) -> &Database {
         self.client.rocket().state::<Database>().unwrap()
     }
+
+    pub async fn create_household(&self, name: Option<&'static str>, user: TestUser) -> Model {
+        household::create(
+            self.database(),
+            name.unwrap_or("My Household").to_string(),
+            user.id(self),
+        )
+        .await
+        .unwrap()
+    }
 }
 
 impl Deref for TestEnvironment {
@@ -169,5 +189,19 @@ impl Deref for TestEnvironment {
 
     fn deref(&self) -> &Self::Target {
         &self.client
+    }
+}
+
+pub enum TestUser {
+    A,
+    B,
+}
+
+impl TestUser {
+    pub fn id(&self, env: &TestEnvironment) -> Uuid {
+        match self {
+            TestUser::A => env.user_a,
+            TestUser::B => env.user_b,
+        }
     }
 }

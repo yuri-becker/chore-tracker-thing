@@ -35,8 +35,8 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(HouseholdMembers::Table)
-                    .drop_column(HouseholdMembers::JoinedViaInvite)
                     .drop_foreign_key(Alias::new("FK_HOUSEHOLD_MEMBERS_INVITE"))
+                    .drop_column(HouseholdMembers::JoinedViaInvite)
                     .to_owned(),
             )
             .await

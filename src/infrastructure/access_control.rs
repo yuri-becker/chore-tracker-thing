@@ -35,3 +35,49 @@ impl Fairing for AccessControl {
         ));
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::AccessControl;
+    use crate::test_environment::TestEnvironment;
+    use rocket::{async_test, get, routes, uri};
+
+    #[get("/")]
+    fn endpoint() -> &'static str {
+        "Hello!"
+    }
+
+    #[async_test]
+    async fn test_allows_from_https_host() {
+        let env = TestEnvironment::builder()
+            .await
+            .mount(routes![endpoint])
+            .attach(AccessControl::new("https://chores.local"))
+            .launch()
+            .await;
+
+        let response = env.get(uri!(endpoint)).dispatch().await;
+        let allow_origin = response
+            .headers()
+            .get_one("Access-Control-Allow-Origin")
+            .unwrap();
+        assert_eq!(allow_origin, "chores.local");
+    }
+
+    #[async_test]
+    async fn test_allows_from_http_host() {
+        let env = TestEnvironment::builder()
+            .await
+            .mount(routes![endpoint])
+            .attach(AccessControl::new("http://chores.local"))
+            .launch()
+            .await;
+
+        let response = env.get(uri!(endpoint)).dispatch().await;
+        let allow_origin = response
+            .headers()
+            .get_one("Access-Control-Allow-Origin")
+            .unwrap();
+        assert_eq!(allow_origin, "chores.local");
+    }
+}

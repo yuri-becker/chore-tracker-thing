@@ -68,3 +68,77 @@ pub async fn create(
         .map(Json::from)
         .map_err(ApiError::from)
 }
+
+#[cfg(test)]
+mod test {
+    use crate::domain::task::RecurrenceUnit;
+    use crate::domain::{task, todo};
+    use crate::test_environment::{TestEnvironment, TestUser};
+    use chrono::Local;
+    use rocket::http::Status;
+    use rocket::serde::json::serde_json::json;
+    use rocket::{async_test, routes};
+    use sea_orm::EntityTrait;
+
+    struct Helpers {}
+
+    impl Helpers {
+        pub async fn create_env() -> TestEnvironment {
+            TestEnvironment::builder()
+                .await
+                .mount(routes![super::create])
+                .launch()
+                .await
+        }
+    }
+
+    #[async_test]
+    async fn test_throws_422_when_recurrence_interval_is_zero() {
+        let env = Helpers::create_env().await;
+        let household = env.create_household(None, TestUser::A).await;
+        let response = env
+            .post(format!("/{}/task", household.id))
+            .header(env.header_user_a())
+            .json(&json!({
+                "title": "Vacuum",
+                "recurrenceUnit": "Weeks",
+                "recurrenceInterval": 0
+            }))
+            .dispatch()
+            .await;
+
+        assert_eq!(response.status(), Status::UnprocessableEntity);
+    }
+
+    #[async_test]
+    async fn test_create_task() {
+        let env = Helpers::create_env().await;
+        let household = env.create_household(None, TestUser::A).await;
+        let response = env
+            .post(format!("/{}/task", household.id))
+            .header(env.header_user_a())
+            .json(&json!({
+                "title": "Vacuum",
+                "recurrenceUnit": "Weeks",
+                "recurrenceInterval": 1
+            }))
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+        let response: super::Response = response.into_json().await.unwrap();
+        let task = task::Entity::find_by_id(response.id)
+            .find_with_related(todo::Entity)
+            .all(env.database().conn())
+            .await
+            .unwrap();
+        assert_eq!(task.len(), 1);
+        let (task, todo) = task.first().unwrap();
+        assert_eq!(task.recurrence_unit, RecurrenceUnit::Weeks);
+        assert_eq!(task.recurrence_interval, 1);
+        assert_eq!(todo.len(), 1);
+        let todo = todo.first().unwrap();
+        assert!(todo.completed_on.is_none());
+        assert!(todo.completed_by.is_none());
+        assert_eq!(todo.due_date, Local::now().date_naive())
+    }
+}
