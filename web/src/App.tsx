@@ -6,6 +6,7 @@ import { HouseholdContextProvider } from './global/household-context.provider.ts
 import { MainMenuContextProvider } from './global/main-menu-context.provider.tsx'
 import { useUser } from './global/use-user.tsx'
 import CreateHouseholdPage from './pages/create-household'
+import HouseholdPage from './pages/household'
 import LoginPage from './pages/login'
 import SettingsPage from './pages/settings/'
 
@@ -24,6 +25,7 @@ function App () {
               <Routes>
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route index path="/" element={<CreateHouseholdPage />} />
+                <Route path='/household/:householdId' element={<HouseholdPage />} />
               </Routes>
             </main>
           </HouseholdContextProvider>

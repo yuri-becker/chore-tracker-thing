@@ -20,7 +20,13 @@ export const MainMenu = () => {
     <nav>
       <ul>
         {!households && <li aria-busy='true'></li>}
-        {households && households.map(household => <li key={household.id}>{household.name}</li>)}
+        {households && households.length >= 2 && households.map(household => <li key={household.id}>
+          <NavLink to={`/household/${household.id}`} >
+            {household.name}
+          </NavLink>
+        </li>)}
+      </ul>
+      <ul>
         <li>
           <Plus />&nbsp;Create Task
         </li>

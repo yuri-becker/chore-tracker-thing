@@ -19,7 +19,7 @@ aside.open {
 aside div {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
+    /*flex-grow: 1;*/
 }
 
 aside div button {
@@ -31,12 +31,29 @@ aside div button svg {
     align-self: flex-start;
 }
 
+aside nav {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 aside nav ul {
     width: 100%;
-    padding-left: 1em;
+    /*padding-left: 1em;*/
+}
+
+aside nav ul:first-of-type {
+    margin-left: 0;
+    flex-grow: 1;
 }
 
 aside ul li {
     background: var(--pico-secondary-background);
     margin-top: 0.15em;
+    padding-left: 1em;
+}
+
+aside ul li .active {
+    color: var(--pico-color);
+    pointer-events: none;
 }
