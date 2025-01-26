@@ -10,6 +10,7 @@ aside {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+    box-shadow: var(--pico-box-shadow);
 }
 
 aside.open {

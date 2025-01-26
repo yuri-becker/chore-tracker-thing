@@ -1,5 +1,5 @@
 import { Button } from '@ariakit/react'
-import { useContext } from 'react'
+import { useCallback, useContext } from 'react'
 import { LogOut, Plus, Settings, X } from 'react-feather'
 import { NavLink } from 'react-router'
 import { HouseholdContext } from '../global/household-contextt.tsx'
@@ -11,9 +11,12 @@ export const MainMenu = () => {
   const { isMenuOpen, setIsMenuOpen } = useContext(MainMenuContext)
   const households = useContext(HouseholdContext)
   const user = useUser()
+  const closeMenu = useCallback(() => {
+    setIsMenuOpen(false)
+  }, [setIsMenuOpen])
   return <aside className={isMenuOpen ? 'open main-menu' : 'main-menu'}>
     <div>
-      <Button className={'outline secondary flat'} onClick={() => setIsMenuOpen(!isMenuOpen)}>
+      <Button className={'outline secondary flat'} onClick={closeMenu}>
         <X />
       </Button>
     </div>
@@ -21,7 +24,7 @@ export const MainMenu = () => {
       <ul>
         {!households && <li aria-busy='true'></li>}
         {households && households.length >= 2 && households.map(household => <li key={household.id}>
-          <NavLink to={`/household/${household.id}`} >
+          <NavLink to={`/household/${household.id}`} onClick={closeMenu} >
             {household.name}
           </NavLink>
         </li>)}
@@ -31,7 +34,7 @@ export const MainMenu = () => {
           <Plus />&nbsp;Create Task
         </li>
         <li>
-          <NavLink className="contrast" to="/settings"><Settings />&nbsp;Settings</NavLink>
+          <NavLink className="contrast" to="/settings" onClick={closeMenu}><Settings />&nbsp;Settings</NavLink>
         </li>
         <li>
           <a className="contrast" href="/oidc/logout"><LogOut />&nbsp;Logout {user!.name}</a>

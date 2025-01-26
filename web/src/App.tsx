@@ -2,6 +2,7 @@ import '@picocss/pico/css/pico.css'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { Header } from './components/header.tsx'
 import { MainMenu } from './components/main-menu.tsx'
+import { Overlay } from './components/overlay.tsx'
 import { HouseholdContextProvider } from './global/household-context.provider.tsx'
 import { MainMenuContextProvider } from './global/main-menu-context.provider.tsx'
 import { useUser } from './global/use-user.tsx'
@@ -19,7 +20,6 @@ function App () {
       {user &&
         <MainMenuContextProvider>
           <HouseholdContextProvider>
-            <MainMenu />
             <main className="container">
               <Header />
               <Routes>
@@ -28,6 +28,8 @@ function App () {
                 <Route path='/household/:householdId' element={<HouseholdPage />} />
               </Routes>
             </main>
+            <Overlay />
+            <MainMenu />
           </HouseholdContextProvider>
         </MainMenuContextProvider>
       }
