@@ -56,14 +56,10 @@ pub async fn generate_invite(
 
 #[cfg(test)]
 mod test {
-    use crate::domain::{household, household_member};
     use crate::http::api::household::invite::Response;
-    use crate::test_environment::TestEnvironment;
+    use crate::test_environment::{TestEnvironment, TestUser};
     use rocket::http::Status;
     use rocket::{async_test, routes};
-    use sea_orm::ActiveValue::Set;
-    use sea_orm::{ActiveModelTrait, NotSet};
-    use uuid::Uuid;
 
     #[async_test]
     async fn test_generate_invite() {
@@ -73,23 +69,7 @@ mod test {
             .launch()
             .await;
 
-        let household = household::ActiveModel {
-            id: Set(Uuid::now_v7()),
-            name: Set("My Household".to_string()),
-        }
-        .insert(env.database().conn())
-        .await
-        .unwrap();
-
-        household_member::ActiveModel {
-            household_id: Set(household.id),
-            user_id: Set(env.user_a),
-            joined_via_invite: NotSet,
-        }
-        .insert(env.database().conn())
-        .await
-        .unwrap();
-
+        let household = env.create_household(None, TestUser::A).await;
         let invite_1 = env
             .get(format!("/{}/invite", household.id))
             .header(env.header_user_a())

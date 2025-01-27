@@ -33,20 +33,28 @@ pub async fn migrate(db: &Database) {
 
 #[cfg(test)]
 mod test {
+    use crate::infrastructure::database::Database;
     use crate::migration::Migrator;
-    use crate::test_environment::TestEnvironment;
     use rocket::async_test;
+    use sea_orm::TransactionTrait;
     use sea_orm_migration::MigratorTrait;
+    use testcontainers_modules::postgres;
+    use testcontainers_modules::testcontainers::runners::AsyncRunner;
 
     #[async_test]
     async fn test_down_migration() {
-        let env = TestEnvironment::builder().await.launch().await;
+        let postgres = postgres::Postgres::default().start().await.unwrap();
+        let database = Database::connect_to_testcontainer(&postgres).await;
 
-        Migrator::down(env.database().conn(), None)
+        database
+            .conn()
+            .transaction(|tx| {
+                Box::pin(async move {
+                    Migrator::down(tx, None).await?;
+                    Migrator::up(tx, None).await
+                })
+            })
             .await
-            .expect("Down Migration failed.");
-        Migrator::up(env.database().conn(), None)
-            .await
-            .expect("Up Migration failed.");
+            .expect("Migrations failed.")
     }
 }

@@ -10,8 +10,8 @@ use rocket::http::Header;
 use rocket::local::asynchronous::Client;
 use rocket::tokio::sync::OnceCell;
 use rocket::{Build, Rocket, Route};
+use sea_orm::ActiveModelTrait;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, ConnectionTrait};
 use std::ops::Deref;
 use testcontainers_modules::postgres;
 use testcontainers_modules::testcontainers::runners::AsyncRunner;
@@ -112,7 +112,6 @@ impl TestEnvironment {
             .await;
 
         let database = Database::connect_to_testcontainer(postgres).await;
-        Self::reset_data(&database).await;
         let (user_a, user_b) = Self::create_test_users(&database).await;
 
         let rocket = Rocket::build()
@@ -129,16 +128,6 @@ impl TestEnvironment {
             user_a,
             user_b,
         }
-    }
-
-    async fn reset_data(database: &Database) {
-        database
-            .conn()
-            .execute_unprepared(
-                "select 'drop table \"' || tablename || '\" cascade;' from pg_tables;",
-            )
-            .await
-            .unwrap();
     }
 
     async fn create_test_users(database: &Database) -> (Uuid, Uuid) {
