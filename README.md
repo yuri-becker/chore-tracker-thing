@@ -1,5 +1,7 @@
 [![AGPL-3.0 License](https://img.shields.io/github/license/yuri-becker/chore-tracker-thing?style=for-the-badge&logo=gnu&logoColor=white&color=%23A42E2B )](https://github.com/yuri-becker/chore-tracker-thing/blob/develop/LICENSE.md)
 [![Latest Commit](https://img.shields.io/github/last-commit/yuri-becker/chore-tracker-thing?style=for-the-badge)](https://github.com/yuri-becker/cchore-tracker-thing/commits/develop)
+[![Coveralls](https://img.shields.io/coverallsCoverage/github/yuri-becker/chore-tracker-thing?style=for-the-badge)](https://coveralls.io/github/yuri-becker/chore-tracker-thing)
+
 
 <br />
 <div align="center">

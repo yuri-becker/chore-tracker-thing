@@ -36,7 +36,6 @@ mod test {
     use crate::infrastructure::database::Database;
     use crate::migration::Migrator;
     use rocket::async_test;
-    use sea_orm::TransactionTrait;
     use sea_orm_migration::MigratorTrait;
     use testcontainers_modules::postgres;
     use testcontainers_modules::testcontainers::runners::AsyncRunner;
@@ -45,16 +44,6 @@ mod test {
     async fn test_down_migration() {
         let postgres = postgres::Postgres::default().start().await.unwrap();
         let database = Database::connect_to_testcontainer(&postgres).await;
-
-        database
-            .conn()
-            .transaction(|tx| {
-                Box::pin(async move {
-                    Migrator::down(tx, None).await?;
-                    Migrator::up(tx, None).await
-                })
-            })
-            .await
-            .expect("Migrations failed.")
+        Migrator::down(database.conn(), None).await.expect("Down Migration failed");
     }
 }
