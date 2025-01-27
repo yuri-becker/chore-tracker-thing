@@ -63,3 +63,91 @@ pub async fn complete(
         .map_err(ApiError::from)
         .map(Json::from)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::http::api::household::task::create;
+    use crate::test_environment::{TestEnvironment, TestUser};
+    use chrono::Days;
+    use rocket::http::Status;
+    use rocket::serde::json::serde_json::json;
+    use rocket::{async_test, routes};
+    use uuid::Uuid;
+
+    #[async_test]
+    async fn test_throws_404_if_not_exists() {
+        let env = TestEnvironment::builder()
+            .await
+            .mount(routes![complete])
+            .launch()
+            .await;
+        let household = env.create_household(None, TestUser::A).await;
+
+        let response = env
+            .post(format!(
+                "/{}/task/{}/complete",
+                household.id,
+                Uuid::now_v7()
+            ))
+            .header(env.header_user_a())
+            .dispatch()
+            .await;
+
+        assert_eq!(response.status(), Status::NotFound);
+    }
+
+    #[async_test]
+    async fn test_complete_task() {
+        let env = TestEnvironment::builder()
+            .await
+            .mount(routes![complete, create::create])
+            .launch()
+            .await;
+
+        let household = env.create_household(None, TestUser::A).await;
+        let task = env
+            .post(format!("/{}/task", household.id))
+            .header(env.header_user_a())
+            .json(&json!({
+                "title": "Vacuum",
+                "recurrenceUnit": "Weeks",
+                "recurrenceInterval": 1
+            }))
+            .dispatch()
+            .await;
+        let task: Response = task.into_json().await.unwrap();
+
+        let complete = env
+            .post(format!("/{}/task/{}/complete", household.id, task.id))
+            .header(env.header_user_a())
+            .dispatch()
+            .await;
+        assert_eq!(complete.status(), Status::Ok);
+        let complete: Response = complete.into_json().await.unwrap();
+        assert_eq!(complete.id, task.id);
+
+        let old_todo = todo::Entity::find_by_id((task.id, 0))
+            .one(env.database().conn())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(old_todo.completed_by, Some(env.user_a));
+        assert!(old_todo.completed_on.is_some());
+
+        let new_todo = todo::find_latest(env.database(), task.id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            new_todo.due_date,
+            task.next_due
+                .unwrap()
+                .checked_add_days(Days::new(7))
+                .unwrap()
+        );
+        assert_eq!(new_todo.iteration, 1);
+        assert_eq!(new_todo.completed_on, None);
+        assert_eq!(new_todo.completed_by, None);
+    }
+}

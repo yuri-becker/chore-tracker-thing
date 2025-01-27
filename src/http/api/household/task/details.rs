@@ -71,3 +71,103 @@ pub async fn details(
         }).collect(),
     }))
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::test_environment::{TestEnvironment, TestUser};
+    use chrono::{Days, Local};
+    use rocket::http::Status;
+    use rocket::{async_test, routes};
+    use sea_orm::ActiveValue::Set;
+    use sea_orm::{ActiveModelTrait, NotSet};
+
+    #[async_test]
+    async fn test_throws_404_if_not_exists() {
+        let env = TestEnvironment::builder()
+            .await
+            .mount(routes![details])
+            .launch()
+            .await;
+
+        let household = env.create_household(None, TestUser::A).await;
+
+        let response = env
+            .get(format!("/{}/task/{}", household.id, Uuid::now_v7()))
+            .header(env.header_user_a())
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::NotFound);
+    }
+
+    #[async_test]
+    async fn test_get_details() {
+        let env = TestEnvironment::builder()
+            .await
+            .mount(routes![details])
+            .launch()
+            .await;
+        let household = env.create_household(None, TestUser::A).await;
+        let task = task::ActiveModel {
+            id: Set(Uuid::now_v7()),
+            title: Set("Vacuum".to_string()),
+            recurrence_interval: Set(2),
+            recurrence_unit: Set(RecurrenceUnit::Days),
+            household_id: Set(household.id),
+        }
+        .insert(env.database().conn())
+        .await
+        .unwrap();
+
+        todo::ActiveModel {
+            task_id: Set(task.id),
+            iteration: Set(0),
+            completed_by: Set(Some(env.user_a)),
+            due_date: Set(Local::now()
+                .naive_local()
+                .date()
+                .checked_sub_days(Days::new(7))
+                .unwrap()),
+            completed_on: Set(Some(Local::now().naive_local())),
+        }
+        .insert(env.database().conn())
+        .await
+        .unwrap();
+
+        todo::ActiveModel {
+            task_id: Set(task.id),
+            iteration: Set(1),
+            due_date: Set(Local::now()
+                .naive_local()
+                .date()
+                .checked_add_days(Days::new(7))
+                .unwrap()),
+            completed_on: NotSet,
+            completed_by: NotSet,
+        }
+        .insert(env.database().conn())
+        .await
+        .unwrap();
+
+        let response = env
+            .get(format!("/{}/task/{}", household.id, task.id))
+            .header(env.header_user_a())
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+        let response: TaskDetails = response.into_json().await.unwrap();
+        assert_eq!(response.title, "Vacuum");
+        assert_eq!(response.past_completions.len(), 1);
+        assert_eq!(
+            response.next_due.unwrap(),
+            Local::now()
+                .naive_local()
+                .date()
+                .checked_add_days(Days::new(7))
+                .unwrap()
+        );
+        let completion = response.past_completions.first().unwrap();
+        assert_eq!(completion.completed_by, Some(env.user_a));
+        assert_eq!(completion.iteration, 0);
+    }
+}

@@ -11,8 +11,8 @@ pub enum RecurrenceUnit {
     Days,
     #[sea_orm(string_value = "Weeks")]
     Weeks,
-    #[sea_orm(string_value = "Months")]
-    Month,
+    #[sea_orm(string_value = "Month")]
+    Months,
 }
 
 impl RecurrenceUnit {
@@ -20,7 +20,7 @@ impl RecurrenceUnit {
         match self {
             RecurrenceUnit::Days => naive_date.add(TimeDelta::days(interval as i64)),
             RecurrenceUnit::Weeks => naive_date.add(TimeDelta::weeks(interval as i64)),
-            RecurrenceUnit::Month => naive_date.add(Months::new(interval)),
+            RecurrenceUnit::Months => naive_date.add(Months::new(interval)),
         }
     }
 }
