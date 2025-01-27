@@ -1,6 +1,7 @@
+import classNames from 'classnames'
 import { useCallback, useContext } from 'react'
 import { MainMenuContext } from '../global/main-menu.context.tsx'
-import './overlay.css'
+import classes from './overlay.module.css'
 
 export const Overlay = () => {
   const { isMenuOpen, setIsMenuOpen } = useContext(MainMenuContext)
@@ -8,6 +9,6 @@ export const Overlay = () => {
     setIsMenuOpen(false)
   }, [setIsMenuOpen])
   return (
-    <div aria-hidden className={isMenuOpen ? 'overlay' : 'overlay hidden'} onClick={closeMenu} />
+    <div aria-hidden className={classNames(classes.overlay, { [classes.hidden]: !isMenuOpen })} onClick={closeMenu} />
   )
 }

@@ -1,4 +1,4 @@
-aside {
+.main-menu {
     position: absolute;
     top: 0;
     left: 0;
@@ -13,48 +13,48 @@ aside {
     box-shadow: var(--pico-box-shadow);
 }
 
-aside.open {
+.main-menu.open {
     transform: translateX(0);
 }
 
-aside div {
+.main-menu div {
     display: flex;
     flex-direction: column;
     /*flex-grow: 1;*/
 }
 
-aside div button {
+.main-menu div button {
     justify-self: flex-end;
     display: flex;
 }
 
-aside div button svg {
+.main-menu div button svg {
     align-self: flex-start;
 }
 
-aside nav {
+.main-menu nav {
     display: flex;
     flex-direction: column;
     height: 100%;
 }
 
-aside nav ul {
+.main-menu nav ul {
     width: 100%;
     /*padding-left: 1em;*/
 }
 
-aside nav ul:first-of-type {
+.main-menu nav ul:first-of-type {
     margin-left: 0;
     flex-grow: 1;
 }
 
-aside ul li {
+.main-menu ul li {
     background: var(--pico-secondary-background);
     margin-top: 0.15em;
     padding-left: 1em;
 }
 
-aside ul li .active {
+.main-menu ul li a[aria-current="page"] {
     color: var(--pico-color);
     pointer-events: none;
 }

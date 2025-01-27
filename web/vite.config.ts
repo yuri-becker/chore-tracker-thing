@@ -13,6 +13,11 @@ export default ({ mode }: UserConfig) => {
     plugins: [react()],
     envDir: projectRoot,
     envPrefix,
+    css: {
+      modules: {
+        localsConvention: 'camelCase'
+      }
+    },
     server: {
       host: '127.0.0.1',
       port: parseInt(env.CHORES_VITE_PORT),

@@ -1,11 +1,12 @@
 import { Button } from '@ariakit/react'
+import classNames from 'classnames'
 import { useCallback, useContext } from 'react'
 import { LogOut, Plus, Settings, X } from 'react-feather'
 import { NavLink } from 'react-router'
 import { HouseholdContext } from '../global/household-contextt.tsx'
 import { MainMenuContext } from '../global/main-menu.context.tsx'
 import { useUser } from '../global/use-user.tsx'
-import './main-menu.css'
+import classes from './main-menu.module.css'
 
 export const MainMenu = () => {
   const { isMenuOpen, setIsMenuOpen } = useContext(MainMenuContext)
@@ -14,7 +15,7 @@ export const MainMenu = () => {
   const closeMenu = useCallback(() => {
     setIsMenuOpen(false)
   }, [setIsMenuOpen])
-  return <aside className={isMenuOpen ? 'open main-menu' : 'main-menu'}>
+  return <aside className={classNames(classes.mainMenu, { [classes.open]: isMenuOpen })}>
     <div>
       <Button className={'outline secondary flat'} onClick={closeMenu}>
         <X />
