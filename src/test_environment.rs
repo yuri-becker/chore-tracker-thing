@@ -3,12 +3,10 @@ use crate::domain::{household, user};
 use crate::http::api::guards::logged_in_user::test::TestLoggedInUserResolver;
 use crate::infrastructure::database::Database;
 use crate::migration;
-use ctor::dtor;
 use rocket::config::SecretKey;
 use rocket::fairing::Fairing;
 use rocket::http::Header;
 use rocket::local::asynchronous::Client;
-use rocket::tokio::sync::OnceCell;
 use rocket::{Build, Rocket, Route};
 use sea_orm::ActiveModelTrait;
 use sea_orm::ActiveValue::Set;
@@ -18,34 +16,13 @@ use testcontainers_modules::testcontainers::runners::AsyncRunner;
 use testcontainers_modules::testcontainers::ContainerAsync;
 use uuid::Uuid;
 
-static POSTGRES: OnceCell<ContainerAsync<postgres::Postgres>> = OnceCell::const_new();
 static SECRET: &str = "sip-thickness-canister-uptake-tinwork-starless-reporter-tiling-tasting";
-
-#[dtor]
-fn after_all() {
-    // We need to manually stop and remove the container, since the OnceCell never gets dropped.
-    // Just dropping here doesn't work since we are not in a tokio runtime, thus the possible
-    // interactions with POSTGRES are limited.
-
-    let id = POSTGRES.get().unwrap().id();
-    std::process::Command::new("docker")
-        .args(["stop", id])
-        .spawn()
-        .unwrap()
-        .wait()
-        .unwrap();
-    std::process::Command::new("docker")
-        .args(["remove", id])
-        .spawn()
-        .unwrap()
-        .wait()
-        .unwrap();
-}
 
 pub struct TestEnvironmentBuilder {
     rocket: Rocket<Build>,
     user_a: Uuid,
     user_b: Uuid,
+    postgres: ContainerAsync<postgres::Postgres>,
 }
 
 impl TestEnvironmentBuilder {
@@ -69,6 +46,7 @@ impl TestEnvironmentBuilder {
             client,
             user_a: self.user_a,
             user_b: self.user_b,
+            postgres: self.postgres,
         }
     }
 }
@@ -98,20 +76,14 @@ pub struct TestEnvironment {
     pub client: Client,
     pub user_a: Uuid,
     pub user_b: Uuid,
+    postgres: ContainerAsync<postgres::Postgres>,
 }
 
 impl TestEnvironment {
     pub async fn builder() -> TestEnvironmentBuilder {
-        let postgres = POSTGRES
-            .get_or_init(|| async {
-                let postgres = postgres::Postgres::default().start().await.unwrap();
-                let database = Database::connect_to_testcontainer(&postgres).await;
-                migration::migrate(&database).await;
-                postgres
-            })
-            .await;
-
-        let database = Database::connect_to_testcontainer(postgres).await;
+        let postgres = postgres::Postgres::default().start().await.unwrap();
+        let database = Database::connect_to_testcontainer(&postgres).await;
+        migration::migrate(&database).await;
         let (user_a, user_b) = Self::create_test_users(&database).await;
 
         let rocket = Rocket::build()
@@ -127,6 +99,7 @@ impl TestEnvironment {
             rocket,
             user_a,
             user_b,
+            postgres,
         }
     }
 

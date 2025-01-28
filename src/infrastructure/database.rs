@@ -55,7 +55,8 @@ mod test {
     impl Database {
         pub async fn connect_to_testcontainer(container: &ContainerAsync<Postgres>) -> Database {
             let connection_string = format!(
-                "postgres://postgres:postgres@127.0.0.1:{}/postgres",
+                "postgres://postgres:postgres@{}:{}/postgres",
+                container.get_host().await.unwrap(),
                 container.get_host_port_ipv4(5432).await.unwrap()
             );
             Database::connect_string(connection_string).await

@@ -1,0 +1,17 @@
+when:
+  - event: push
+    branch:
+      - main
+      - develop
+      - feature/tests-in-ci
+
+steps:
+  - name: Test
+    image: xd009642/tarpaulin:latest
+    commands:
+      - cargo tarpaulin --engine llvm --coveralls "$COVERALLS_TOKEN"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      COVERALLS_TOKEN:
+        from_secret: coveralls_token
