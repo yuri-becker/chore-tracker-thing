@@ -1,0 +1,87 @@
+when:
+  - event: push
+  - event: pull_request
+
+steps:
+  # BACKEND
+  - name: "[Backend] Build"
+    image: rust:1
+    depends_on: [ ]
+    commands:
+      - cargo build
+  - name: "[Backend] Formatting"
+    depends_on: [ "[Backend] Build" ]
+    image: rust:1
+    commands:
+      - rustup component add rustfmt
+      - cargo fmt --check
+  - name: "[Backend] Lint"
+    depends_on: [ "[Backend] Build" ]
+    image: rust:1
+    commands:
+      - rustup component add clippy
+      - cargo clippy
+  - name: "[Backend] Test"
+    depends_on: [ "[Backend] Build" ]
+    image: rust:1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      - cargo test
+
+  # FRONTEND
+  - name: "[Frontend] Get Dependencies"
+    image: node:lts-slim
+    depends_on: [ ]
+    directory: web
+    commands:
+      - corepack enable
+      - corepack install
+      - yarn
+  - name: "[Frontend] Build"
+    depends_on: [ "[Frontend] Get Dependencies" ]
+    image: node:lts-slim
+    directory: web
+    commands:
+      - corepack enable
+      - corepack install
+      - yarn build
+  - name: "[Frontend] Lint"
+    image: node:lts-slim
+    depends_on: [ "[Frontend] Get Dependencies" ]
+    directory: web
+    commands:
+      - corepack enable
+      - corepack install
+      - yarn lint
+
+  # MAIL
+  - name: "Send Mail on Failure"
+    image: deblan/woodpecker-email
+    depends_on:
+      - "[Frontend] Build"
+      - "[Frontend] Lint"
+      - "[Backend] Formatting"
+      - "[Backend] Lint"
+      - "[Backend] Test"
+    settings:
+      dsn:
+        from_secret: MAIL_DSN
+      from:
+        address:
+          from_secret: MAIL_FROM_ADDRESS
+        name:
+          from_secret: MAIL_FROM_NAME
+      content:
+        subject: "(╯°□°）╯︵ ┻━┻  Bad puppy/kitty/other entity! ({{ commit.branch }} – {{ commit.sha[0:8] }})"
+        body: |
+          <p>Your commit {{commit.sha }} broke the pipeline 💢.<br/>
+          See <a href="{{ pipeline.url }}">{{ pipeline.url }}</a> to see what broke.</p>
+          Next time, remember to<br/>
+          <pre><code>
+          cargo fmt
+          cargo clippy --fix --allow-dirty --allow-staged
+          yarn --cwd web lint --fix
+          </code></pre>
+    when:
+      status: [ failure ]

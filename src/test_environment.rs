@@ -46,7 +46,7 @@ impl TestEnvironmentBuilder {
             client,
             user_a: self.user_a,
             user_b: self.user_b,
-            postgres: self.postgres,
+            _postgres: self.postgres,
         }
     }
 }
@@ -76,7 +76,7 @@ pub struct TestEnvironment {
     pub client: Client,
     pub user_a: Uuid,
     pub user_b: Uuid,
-    postgres: ContainerAsync<postgres::Postgres>,
+    _postgres: ContainerAsync<postgres::Postgres>,
 }
 
 impl TestEnvironment {

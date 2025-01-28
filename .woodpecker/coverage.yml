@@ -3,13 +3,15 @@ when:
     branch:
       - main
       - develop
-      - feature/tests-in-ci
+
+depends_on:
+  - validate-backend
 
 steps:
-  - name: Test
+  - name: Generate and Upload Coverage
     image: xd009642/tarpaulin:latest
     commands:
-      - cargo tarpaulin --engine llvm --coveralls "$COVERALLS_TOKEN"
+      - cargo tarpaulin --engine llvm --skip-clean --coveralls "$COVERALLS_TOKEN"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:

@@ -44,7 +44,9 @@ mod test {
     async fn test_down_migration() {
         let postgres = postgres::Postgres::default().start().await.unwrap();
         let database = Database::connect_to_testcontainer(&postgres).await;
-        Migrator::down(database.conn(), None).await.expect("Down Migration failed");
+        Migrator::down(database.conn(), None)
+            .await
+            .expect("Down Migration failed");
         postgres.stop().await.unwrap();
         drop(postgres)
     }
