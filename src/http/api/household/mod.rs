@@ -5,6 +5,7 @@ mod edit;
 mod get;
 mod invite;
 mod join;
+mod leave;
 mod response;
 mod task;
 
@@ -15,6 +16,7 @@ pub fn routes() -> Vec<Route> {
         get::get,
         invite::generate_invite,
         join::join,
+        leave::leave,
         task::complete::complete,
         task::create::create,
         task::get::get,
