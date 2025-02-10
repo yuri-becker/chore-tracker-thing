@@ -21,21 +21,29 @@ impl Deref for OidcClient {
 }
 
 impl OidcClient {
-    pub async fn new(config: &Config) -> Self {
-        let client = DiscoveredClient::discover(
+    pub async fn from_config(config: &Config) -> Self {
+        Self::new(
             config.oidc.client_id.clone(),
             (*config.oidc.client_password).clone(),
-            config.host.clone() + "/oidc/callback",
-            Url::parse(config.oidc.endpoint.as_str()).expect("oidc_endpoint is not a valid URL"),
+            config.host.clone(),
+            config.oidc.endpoint.clone(),
         )
-        .await;
-        if client.is_err() {
-            panic!(
-                "Failed to discover OIDC provider: {:?}",
-                client.unwrap_err()
-            );
-        }
-        let client = client.unwrap();
+        .await
+    }
+
+    pub async fn new(
+        client_id: String,
+        client_password: String,
+        origin: String,
+        endpoint: String,
+    ) -> OidcClient {
+        let client = DiscoveredClient::discover(
+            client_id,
+            client_password,
+            origin + "/oidc/callback",
+            Url::parse(&endpoint).expect("oidc_endpoint is not a valid URL"),
+        )
+        .await.expect("Failed to discover OIDC provider");
         info!("Successfully discovered OIDC provider");
         OidcClient { client }
     }

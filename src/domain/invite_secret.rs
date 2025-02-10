@@ -10,7 +10,7 @@ pub struct InviteSecret {
 
 impl InviteSecret {
     pub fn generate() -> Result<InviteSecret, argon2::Error> {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         let mut secret = [0u8; 16];
         rng.fill_bytes(&mut secret);

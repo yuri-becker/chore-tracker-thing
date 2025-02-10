@@ -1,8 +1,8 @@
 use crate::infrastructure::oidc_client::OidcClient;
 use log::info;
 use openid::Options;
-use rand::distributions::Alphanumeric;
-use rand::{thread_rng, Rng};
+use rand::distr::Alphanumeric;
+use rand::{rng, Rng};
 use rocket::http::Status;
 use rocket::response::Redirect;
 use rocket::{get, State};
@@ -10,14 +10,14 @@ use rocket::{get, State};
 #[get("/login")]
 pub fn login(oidc_client: &State<OidcClient>) -> Result<Redirect, Status> {
     let state = String::from_utf8(
-        thread_rng()
+        rng()
             .sample_iter(&Alphanumeric)
             .take(32)
             .collect::<Vec<u8>>(),
     )
     .unwrap();
     let nonce = String::from_utf8(
-        thread_rng()
+        rng()
             .sample_iter(&Alphanumeric)
             .take(32)
             .collect::<Vec<u8>>(),
