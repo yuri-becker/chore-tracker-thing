@@ -1,5 +1,5 @@
 use crate::domain::{household_member, oidc_user, user};
-use crate::http::api::api_error::ApiError;
+use crate::http::api::api_error::{ApiError, EmptyApiResult};
 use crate::infrastructure::database::Database;
 use crate::infrastructure::oidc_client::OidcClient;
 use log::{debug, warn};
@@ -15,11 +15,7 @@ pub struct LoggedInUser {
 }
 
 impl LoggedInUser {
-    pub async fn in_household(
-        &self,
-        database: &Database,
-        household_id: Uuid,
-    ) -> Result<(), ApiError> {
+    pub async fn in_household(&self, database: &Database, household_id: Uuid) -> EmptyApiResult {
         household_member::Entity::find()
             .filter(household_member::Column::HouseholdId.eq(household_id))
             .filter(household_member::Column::UserId.eq(self.id))

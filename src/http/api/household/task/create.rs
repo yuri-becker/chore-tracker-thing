@@ -2,7 +2,7 @@ use crate::domain::task::RecurrenceUnit;
 use crate::domain::{task, todo};
 use crate::http::api::api_error::ApiError;
 use crate::http::api::guards::logged_in_user::LoggedInUser;
-use crate::http::api::household::task::response::Response;
+use crate::http::api::household::task::response::Task;
 use crate::http::api::{FromModel, UuidParam};
 use crate::infrastructure::database::Database;
 use chrono::Local;
@@ -10,7 +10,7 @@ use rocket::post;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, NotSet, TransactionTrait};
+use sea_orm::{ActiveModelTrait, TransactionTrait};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -27,7 +27,7 @@ pub async fn create(
     user: LoggedInUser,
     household_id: UuidParam,
     request: Json<Request>,
-) -> Result<Json<Response>, ApiError> {
+) -> Result<Json<Task>, ApiError> {
     user.in_household(db, *household_id).await?;
     let request = request.0;
     if request.recurrence_interval < 1 {
@@ -48,22 +48,16 @@ pub async fn create(
                 }
                 .insert(tx)
                 .await?;
-                todo::ActiveModel {
-                    task_id: Set(task.id),
-                    iteration: Set(0),
-                    due_date: Set(Local::now().date_naive()),
-                    completed_by: NotSet,
-                    completed_on: NotSet,
-                }
-                .insert(tx)
-                .await?;
+                todo::ActiveModel::initial(task.id, Local::now().date_naive())
+                    .insert(tx)
+                    .await?;
                 Ok(task)
             })
         })
         .await
         .map_err(ApiError::from)?;
 
-    Response::from_model(db, task)
+    Task::from_model(db, task)
         .await
         .map(Json::from)
         .map_err(ApiError::from)
@@ -125,7 +119,7 @@ mod test {
             .dispatch()
             .await;
         assert_eq!(response.status(), Status::Ok);
-        let response: super::Response = response.into_json().await.unwrap();
+        let response: super::Task = response.into_json().await.unwrap();
         let task = task::Entity::find_by_id(response.id)
             .find_with_related(todo::Entity)
             .all(env.database().conn())

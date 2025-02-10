@@ -1,4 +1,5 @@
 use log::error;
+use rocket::serde::json::Json;
 use rocket::Responder;
 use sea_orm::{DbErr, TransactionError};
 
@@ -31,3 +32,6 @@ impl From<TransactionError<DbErr>> for ApiError {
         Self::DatabaseError(())
     }
 }
+
+pub type EmptyApiResult = Result<(), ApiError>;
+pub type ApiResult<T> = Result<Json<T>, ApiError>;

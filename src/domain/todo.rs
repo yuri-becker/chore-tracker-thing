@@ -1,7 +1,9 @@
 use crate::infrastructure::database::Database;
+use chrono::NaiveDate;
 use rocket::serde::{Deserialize, Serialize};
 use sea_orm::entity::prelude::*;
-use sea_orm::{Order, QueryOrder, QuerySelect};
+use sea_orm::ActiveValue::Set;
+use sea_orm::{NotSet, Order, QueryOrder, QuerySelect};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
@@ -43,13 +45,27 @@ impl Related<super::user::Entity> for Entity {
     }
 }
 
+impl ActiveModel {
+    pub fn initial(task_id: Uuid, due_date: NaiveDate) -> ActiveModel {
+        ActiveModel {
+            task_id: Set(task_id),
+            iteration: Set(0),
+            due_date: Set(due_date),
+            completed_by: NotSet,
+            completed_on: NotSet,
+        }
+    }
+}
+
 impl ActiveModelBehavior for ActiveModel {}
 
-pub async fn find_latest(db: &Database, task: Uuid) -> Result<Option<Model>, DbErr> {
-    Entity::find()
-        .filter(Column::TaskId.eq(task))
-        .order_by(Column::Iteration, Order::Desc)
-        .limit(1)
-        .one(db.conn())
-        .await
+impl Entity {
+    pub async fn find_latest(db: &Database, task: Uuid) -> Result<Option<Model>, DbErr> {
+        Entity::find()
+            .filter(Column::TaskId.eq(task))
+            .order_by(Column::Iteration, Order::Desc)
+            .limit(1)
+            .one(db.conn())
+            .await
+    }
 }

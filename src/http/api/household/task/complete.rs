@@ -1,14 +1,14 @@
 use crate::domain::{task, todo};
 use crate::http::api::api_error::ApiError;
 use crate::http::api::guards::logged_in_user::LoggedInUser;
-use crate::http::api::household::task::response::Response;
+use crate::http::api::household::task::response::Task;
 use crate::http::api::{FromModel, UuidParam};
 use crate::infrastructure::database::Database;
 use chrono::Local;
 use rocket::post;
 use rocket::serde::json::Json;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, EntityTrait, IntoActiveModel, TransactionTrait};
+use sea_orm::{ActiveModelTrait, EntityTrait, IntoActiveModel, NotSet, TransactionTrait};
 
 #[post("/<household_id>/task/<task_id>/complete")]
 pub async fn complete(
@@ -16,10 +16,10 @@ pub async fn complete(
     user: LoggedInUser,
     household_id: UuidParam,
     task_id: UuidParam,
-) -> Result<Json<Response>, ApiError> {
+) -> Result<Json<Task>, ApiError> {
     user.in_household(db, *household_id).await?;
 
-    let todo = todo::find_latest(db, *task_id)
+    let todo = todo::Entity::find_latest(db, *task_id)
         .await
         .map_err(ApiError::from)?
         .ok_or(ApiError::NotFound(()))?;
@@ -45,9 +45,9 @@ pub async fn complete(
                     iteration: Set(todo.iteration.unwrap() + 1),
                     due_date: Set(task
                         .recurrence_unit
-                        .next(Local::now().date_naive(), task.recurrence_interval as u32)),
-                    completed_by: Default::default(),
-                    completed_on: Default::default(),
+                        .next_now(task.recurrence_interval as u32)),
+                    completed_by: NotSet,
+                    completed_on: NotSet,
                 }
                 .insert(tx)
                 .await?;
@@ -58,7 +58,7 @@ pub async fn complete(
         .await
         .map_err(ApiError::from)?;
 
-    Response::from_model(db, task)
+    Task::from_model(db, task)
         .await
         .map_err(ApiError::from)
         .map(Json::from)
@@ -116,7 +116,7 @@ mod test {
             }))
             .dispatch()
             .await;
-        let task: Response = task.into_json().await.unwrap();
+        let task: Task = task.into_json().await.unwrap();
 
         let complete = env
             .post(format!("/{}/task/{}/complete", household.id, task.id))
@@ -124,7 +124,7 @@ mod test {
             .dispatch()
             .await;
         assert_eq!(complete.status(), Status::Ok);
-        let complete: Response = complete.into_json().await.unwrap();
+        let complete: Task = complete.into_json().await.unwrap();
         assert_eq!(complete.id, task.id);
 
         let old_todo = todo::Entity::find_by_id((task.id, 0))
@@ -135,7 +135,7 @@ mod test {
         assert_eq!(old_todo.completed_by, Some(env.user_a));
         assert!(old_todo.completed_on.is_some());
 
-        let new_todo = todo::find_latest(env.database(), task.id)
+        let new_todo = todo::Entity::find_latest(env.database(), task.id)
             .await
             .unwrap()
             .unwrap();

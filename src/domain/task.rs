@@ -1,4 +1,5 @@
-use chrono::{Months, NaiveDate, TimeDelta};
+use crate::infrastructure::database::Database;
+use chrono::{Local, Months, NaiveDate, TimeDelta};
 use rocket::serde::{Deserialize, Serialize};
 use sea_orm::entity::prelude::*;
 use std::ops::Add;
@@ -22,6 +23,10 @@ impl RecurrenceUnit {
             RecurrenceUnit::Weeks => naive_date.add(TimeDelta::weeks(interval as i64)),
             RecurrenceUnit::Months => naive_date.add(Months::new(interval)),
         }
+    }
+
+    pub fn next_now(&self, interval: u32) -> NaiveDate {
+        self.next(Local::now().date_naive(), interval)
     }
 }
 
@@ -68,3 +73,14 @@ impl Related<super::todo::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+impl Model {
+    pub async fn latest_todo(&self, db: &Database) -> Result<Option<super::todo::Model>, DbErr> {
+        super::todo::Entity::find_latest(db, self.id).await
+    }
+
+    pub fn next_recurrence(&self) -> NaiveDate {
+        self.recurrence_unit
+            .next_now(self.recurrence_interval as u32)
+    }
+}

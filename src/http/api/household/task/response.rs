@@ -1,5 +1,5 @@
+use crate::domain::task;
 use crate::domain::task::RecurrenceUnit;
-use crate::domain::{task, todo};
 use crate::http::api::FromModel;
 use crate::infrastructure::database::Database;
 use chrono::NaiveDate;
@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
-pub struct Response {
+pub struct Task {
     pub id: Uuid,
     pub title: String,
     pub recurrence_unit: RecurrenceUnit,
@@ -19,9 +19,9 @@ pub struct Response {
 }
 
 #[async_trait]
-impl FromModel<task::Model> for Response {
+impl FromModel<task::Model> for Task {
     async fn from_model(db: &Database, value: task::Model) -> Result<Self, DbErr> {
-        let next_due = todo::find_latest(db, value.id).await?.map(|it| it.due_date);
+        let next_due = value.latest_todo(db).await?.map(|it| it.due_date);
 
         Ok(Self {
             id: value.id,

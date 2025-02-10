@@ -1,5 +1,5 @@
 use crate::domain::household_member;
-use crate::http::api::api_error::ApiError;
+use crate::http::api::api_error::EmptyApiResult;
 use crate::http::api::guards::logged_in_user::LoggedInUser;
 use crate::http::api::UuidParam;
 use crate::infrastructure::database::Database;
@@ -7,11 +7,7 @@ use rocket::post;
 use sea_orm::EntityTrait;
 
 #[post("/<household_id>/leave")]
-pub async fn leave(
-    user: LoggedInUser,
-    household_id: UuidParam,
-    db: &Database,
-) -> Result<(), ApiError> {
+pub async fn leave(user: LoggedInUser, household_id: UuidParam, db: &Database) -> EmptyApiResult {
     user.in_household(db, *household_id).await?;
     household_member::Entity::delete_by_id((user.id, *household_id))
         .exec(db.conn())
