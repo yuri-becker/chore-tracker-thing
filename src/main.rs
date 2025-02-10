@@ -18,6 +18,7 @@ mod migration;
 #[cfg(test)]
 mod test_environment;
 
+#[cfg(not(tarpaulin_include))]
 #[launch]
 async fn rocket() -> _ {
     init_dotenv();
