@@ -1,16 +1,12 @@
+use crate::infrastructure::host::Host;
 use crate::infrastructure::oidc_client::OidcClient;
 use log::info;
 use rocket::http::CookieJar;
 use rocket::response::Redirect;
 use rocket::{get, State};
-use crate::infrastructure::host::Host;
 
 #[get("/logout")]
-pub fn logout(
-    cookie_jar: &CookieJar<'_>,
-    oidc_client: &State<OidcClient>,
-    host: Host,
-) -> Redirect {
+pub fn logout(cookie_jar: &CookieJar<'_>, oidc_client: &State<OidcClient>, host: Host) -> Redirect {
     cookie_jar.remove_private("user");
     if let Some(id_token) = cookie_jar.get("oidc_token") {
         let id_token = id_token.value();
@@ -27,7 +23,6 @@ pub fn logout(
             info!("Redirecting to OIDC logout endpoint: {}", endpoint);
             return Redirect::found::<String>(endpoint.to_string());
         };
-
     };
     Redirect::to("/")
 }

@@ -67,7 +67,7 @@ where
 pub struct OidcLoggedInUserResolver {}
 
 impl OidcLoggedInUserResolver {
-     pub fn new_state() -> LoggedInUserResolverState {
+    pub fn new_state() -> LoggedInUserResolverState {
         Box::new(OidcLoggedInUserResolver {})
     }
 }
@@ -115,7 +115,7 @@ impl LoggedInUserResolver for OidcLoggedInUserResolver {
 }
 
 #[cfg(test)]
- pub mod test {
+pub mod test {
     use crate::http::api::api_error::ApiError;
     use crate::http::api::guards::logged_in_user::{
         LoggedInUser, LoggedInUserResolver, LoggedInUserResolverState,

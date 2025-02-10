@@ -1,4 +1,4 @@
-use crate::domain::task::RecurrenceUnit;
+use crate::domain::recurrence_unit::RecurrenceUnit;
 use crate::domain::{task, todo};
 use crate::http::api::api_error::ApiError;
 use crate::http::api::guards::logged_in_user::LoggedInUser;
@@ -79,8 +79,8 @@ mod test {
     use chrono::{Days, Local};
     use rocket::http::Status;
     use rocket::{async_test, routes};
-    use sea_orm::{ActiveModelTrait, NotSet};
     use sea_orm::ActiveValue::Set;
+    use sea_orm::{ActiveModelTrait, NotSet};
 
     #[async_test]
     async fn test_throws_404_if_not_exists() {

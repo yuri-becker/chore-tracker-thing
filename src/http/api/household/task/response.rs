@@ -1,5 +1,5 @@
+use crate::domain::recurrence_unit::RecurrenceUnit;
 use crate::domain::task;
-use crate::domain::task::RecurrenceUnit;
 use crate::http::api::FromModel;
 use crate::infrastructure::database::Database;
 use chrono::NaiveDate;

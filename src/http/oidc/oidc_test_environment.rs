@@ -23,10 +23,10 @@ use tokio::io::AsyncReadExt;
 use tokio::process::{Child, Command};
 use tokio::time::timeout;
 
-const CLIENT_ID: &'static str = "ctt-test";
-const CLIENT_NAME: &'static str = "Chore Tracker Thing (test)";
-const CLIENT_SECRET: &'static str = "secret!";
-const BIND_ADDR: &'static str = "127.0.0.1";
+const CLIENT_ID: &str = "ctt-test";
+const CLIENT_NAME: &str = "Chore Tracker Thing (test)";
+const CLIENT_SECRET: &str = "secret!";
+const BIND_ADDR: &str = "127.0.0.1";
 
 pub struct OidcTestEnvironment {
     client: Client,
@@ -60,7 +60,7 @@ impl OidcTestEnvironment {
         (postgres, database)
     }
 
-    async fn build_dex_container(origin: &String) -> ContainerAsync<Dex> {
+    async fn build_dex_container(origin: &str) -> ContainerAsync<Dex> {
         dex::Dex::default()
             .with_simple_user()
             .with_client(dex::PrivateClient {
@@ -74,14 +74,14 @@ impl OidcTestEnvironment {
             .unwrap()
     }
 
-    async fn build_oidc_client(origin: &String, dex: &ContainerAsync<Dex>) -> OidcClient {
+    async fn build_oidc_client(origin: &str, dex: &ContainerAsync<Dex>) -> OidcClient {
         OidcClient::new(
             CLIENT_ID.to_string(),
             CLIENT_SECRET.to_string(),
-            origin.clone(),
+            origin.to_string(),
             format!(
                 "http://{}:{}",
-                dex.get_host().await.unwrap().to_string(),
+                dex.get_host().await.unwrap(),
                 dex.get_host_port_ipv4(5556).await.unwrap()
             ),
         )

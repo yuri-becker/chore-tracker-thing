@@ -43,7 +43,8 @@ impl OidcClient {
             origin + "/oidc/callback",
             Url::parse(&endpoint).expect("oidc_endpoint is not a valid URL"),
         )
-        .await.expect("Failed to discover OIDC provider");
+        .await
+        .expect("Failed to discover OIDC provider");
         info!("Successfully discovered OIDC provider");
         OidcClient { client }
     }

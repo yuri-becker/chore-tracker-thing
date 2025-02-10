@@ -82,9 +82,15 @@ mod test {
         let callback_url = browser.current_url().await.unwrap();
         let callback_path = callback_url.path();
         let callback_query = callback_url.query().expect("Should have query.");
-        let callback_response = env.api().get(format!("{callback_path}?{callback_query}"))
-            .dispatch().await;
+        let callback_response = env
+            .api()
+            .get(format!("{callback_path}?{callback_query}"))
+            .dispatch()
+            .await;
         assert_eq!(callback_response.status(), Status::SeeOther);
-        assert!(callback_response.cookies().get("oidc_token").is_some(), "Callback did not set oidc_token.");
+        assert!(
+            callback_response.cookies().get("oidc_token").is_some(),
+            "Callback did not set oidc_token."
+        );
     }
 }

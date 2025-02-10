@@ -34,7 +34,7 @@ pub async fn get(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::domain::task::RecurrenceUnit;
+    use crate::domain::recurrence_unit::RecurrenceUnit;
     use crate::test_environment::{TestEnvironment, TestUser};
     use rocket::http::Status;
     use rocket::{async_test, routes};

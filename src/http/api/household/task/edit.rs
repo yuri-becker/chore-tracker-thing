@@ -1,4 +1,4 @@
-use crate::domain::task::RecurrenceUnit;
+use crate::domain::recurrence_unit::RecurrenceUnit;
 use crate::domain::{task, todo};
 use crate::http::api::api_error::{ApiError, ApiResult};
 use crate::http::api::guards::logged_in_user::LoggedInUser;

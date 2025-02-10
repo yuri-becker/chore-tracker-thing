@@ -1,34 +1,8 @@
+use crate::domain::recurrence_unit::RecurrenceUnit;
 use crate::infrastructure::database::Database;
-use chrono::{Local, Months, NaiveDate, TimeDelta};
+use chrono::NaiveDate;
 use rocket::serde::{Deserialize, Serialize};
 use sea_orm::entity::prelude::*;
-use std::ops::Add;
-
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
-#[serde(crate = "rocket::serde")]
-#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "recurrence_unit")]
-pub enum RecurrenceUnit {
-    #[sea_orm(string_value = "Days")]
-    Days,
-    #[sea_orm(string_value = "Weeks")]
-    Weeks,
-    #[sea_orm(string_value = "Month")]
-    Months,
-}
-
-impl RecurrenceUnit {
-    pub fn next(&self, naive_date: NaiveDate, interval: u32) -> NaiveDate {
-        match self {
-            RecurrenceUnit::Days => naive_date.add(TimeDelta::days(interval as i64)),
-            RecurrenceUnit::Weeks => naive_date.add(TimeDelta::weeks(interval as i64)),
-            RecurrenceUnit::Months => naive_date.add(Months::new(interval)),
-        }
-    }
-
-    pub fn next_now(&self, interval: u32) -> NaiveDate {
-        self.next(Local::now().date_naive(), interval)
-    }
-}
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
