@@ -5,3 +5,7 @@ form div[role="alert"] {
 button.flat {
     border: 0;
 }
+
+html, body, #root {
+    height: 100%;
+}

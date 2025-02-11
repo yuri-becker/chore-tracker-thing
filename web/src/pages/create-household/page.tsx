@@ -1,38 +1,35 @@
-import { Form, FormError, FormInput, FormLabel, FormProvider, FormSubmit, useFormStore } from '@ariakit/react/form'
-import '@picocss/pico/css/pico.css'
+import { Button, TextInput } from '@mantine/core'
+import { useForm } from '@mantine/form'
 
 const Page = () => {
-  const form = useFormStore({ defaultValues: { name: '' } })
+  const form = useForm({
+    mode: 'uncontrolled',
+    initialValues: {
+      name: ''
+    },
 
-  form.useSubmit(async (state) => {
-    await fetch('/api/household', {
-      method: 'POST',
-      body: JSON.stringify(state.values)
-    })
-  })
-
-  form.useValidate(store => {
-    if (store.values.name.length === 0) {
-      store.errors.name = 'Name is required'
+    validate: {
+      name: (value) => (value.length === 0 ? 'Name is required' : null)
     }
   })
 
+  const handleSubmit = async (values: typeof form.values) => {
+    await fetch('/api/household', {
+      method: 'POST',
+      body: JSON.stringify(values)
+    })
+  }
+
   return (
-    <FormProvider>
-      <Form store={form}>
-        <h2>New Household</h2>
-        <div>
-          <FormLabel name={form.names.name} >Household Name</FormLabel>
-          <FormInput name={form.names.name} placeholder="Miya's House" />
-          <FormError name={form.names.name} />
-        </div>
-        <div >
-          <FormSubmit disabled={!!form.getError('name') || form.getState().submitting} aria-busy={form.getState().submitting}>
-            Add
-          </FormSubmit>
-        </div>
-      </Form>
-    </FormProvider>
+    <form onSubmit={form.onSubmit(handleSubmit)}>
+      <TextInput
+        label="Name"
+        placeholder="Miya's Household"
+        key={form.key('name')}
+        {...form.getInputProps('name')}
+      />
+      <Button loading={form.submitting} type="submit">Add</Button>
+    </form>
   )
 }
 

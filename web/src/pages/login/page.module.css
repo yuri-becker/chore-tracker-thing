@@ -1,0 +1,14 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.login-container {
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.footer {
+    text-align: center;
+}
