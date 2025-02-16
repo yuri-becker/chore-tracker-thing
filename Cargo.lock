@@ -3939,7 +3939,7 @@ dependencies = [
 [[package]]
 name = "testcontainers-modules"
 version = "0.11.6"
-source = "git+https://github.com/yuri-becker/testcontainers-rs-modules-community.git#9aaadfc281597f877827fe8aa313d235009328f8"
+source = "git+https://github.com/testcontainers/testcontainers-rs-modules-community.git#5f03a43070b2eca344723a4ce6a5a37786f30ec1"
 dependencies = [
  "serde",
  "serde_json",

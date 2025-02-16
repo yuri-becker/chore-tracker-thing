@@ -6,7 +6,7 @@ mod login;
 mod logout;
 mod oidc_error;
 #[cfg(test)]
-mod oidc_test_environment;
+pub mod oidc_test_environment;
 
 pub fn routes() -> Vec<Route> {
     routes![login::login, callback::callback, logout::logout]
@@ -18,7 +18,7 @@ pub fn routes() -> Vec<Route> {
 mod test {
     use super::*;
     use crate::domain::{oidc_user, user};
-    
+
     use oidc_test_environment::*;
     use rocket::async_test;
     use rocket::http::Status;
@@ -26,20 +26,10 @@ mod test {
     use sea_orm::{ActiveModelTrait, EntityTrait, NotSet};
     use uuid::Uuid;
 
-    async fn get_dex_uri(env: &OidcTestEnvironment) -> String {
-        let login_response = env.api().get("/oidc/login").dispatch().await;
-        login_response
-            .headers()
-            .get_one("Location")
-            .expect("Location should be set.")
-            .to_string()
-    }
-
     #[async_test]
-    async fn test_login_new_user() {
+    async fn new_user_can_login() {
         let env = OidcTestEnvironment::launch().await;
-        let dex_uri = get_dex_uri(&env).await;
-        let browser = env.dex_browser(&dex_uri).await;
+        let browser = env.dex_browser().await;
         browser.wait_for_loaded().await.unwrap();
         browser.login().await.unwrap();
         browser.grant_access().await.unwrap();
@@ -60,7 +50,7 @@ mod test {
     }
 
     #[async_test]
-    async fn test_login_existing_user_and_updates_display_name() {
+    async fn existing_user_can_login_and_updates_display_name() {
         let env = OidcTestEnvironment::launch().await;
         let user = user::ActiveModel {
             id: Set(Uuid::now_v7()),
@@ -77,8 +67,7 @@ mod test {
         .await
         .unwrap();
 
-        let dex_uri = get_dex_uri(&env).await;
-        let browser = env.dex_browser(&dex_uri).await;
+        let browser = env.dex_browser().await;
         browser.wait_for_loaded().await.unwrap();
         browser.login().await.unwrap();
         browser.grant_access().await.unwrap();
@@ -105,10 +94,9 @@ mod test {
     }
 
     #[async_test]
-    async fn test_logout() {
+    async fn can_login_and_logout() {
         let env = OidcTestEnvironment::launch().await;
-        let dex_uri = get_dex_uri(&env).await;
-        let browser = env.dex_browser(&dex_uri).await;
+        let browser = env.dex_browser().await;
         browser.wait_for_loaded().await.unwrap();
         browser.login().await.unwrap();
         browser.grant_access().await.unwrap();
@@ -130,60 +118,5 @@ mod test {
             logout_response.cookies().get("oidc_token").unwrap().value(),
             ""
         );
-    }
-
-    #[async_test]
-    async fn missing_error_description_callback_throws_400() {
-        let env = OidcTestEnvironment::launch().await;
-        let response = env.api().get("/oidc/callback?error=ewwow").dispatch().await;
-        assert_eq!(response.status(), Status::BadRequest);
-    }
-
-    #[async_test]
-    async fn missing_error_iss_throws_400() {
-        let env = OidcTestEnvironment::launch().await;
-        let response = env
-            .api()
-            .get("/oidc/callback?error=ewwow&error_description=something")
-            .dispatch()
-            .await;
-        assert_eq!(response.status(), Status::BadRequest);
-    }
-
-    #[async_test]
-    async fn access_denied_callback_redirects_to_root() {
-        let env = OidcTestEnvironment::launch().await;
-        let response = env.api().get("/oidc/callback?error=access_denied&error_description=something&iss=http://dex.local").dispatch().await;
-        assert_eq!(response.status(), Status::SeeOther);
-        assert_eq!(response.headers().get_one("Location"), Some("/"))
-    }
-
-    #[async_test]
-    async fn unknown_error_callback_throws_500() {
-        let env = OidcTestEnvironment::launch().await;
-        let response = env.api().get("/oidc/callback?error=unknown_error&error_description=something&iss=http://dex.local").dispatch().await;
-        assert_eq!(response.status(), Status::InternalServerError);
-    }
-
-    #[async_test]
-    async fn no_code_throws_400() {
-        let env = OidcTestEnvironment::launch().await;
-        let response = env
-            .api()
-            .get("/oidc/callback?something=nothing")
-            .dispatch()
-            .await;
-        assert_eq!(response.status(), Status::BadRequest);
-    }
-
-    #[async_test]
-    async fn invalid_token_throws_401() {
-        let env = OidcTestEnvironment::launch().await;
-        let response = env
-            .api()
-            .get("/oidc/callback?code=somethingsomething")
-            .dispatch()
-            .await;
-        assert_eq!(response.status(), Status::Unauthorized);
     }
 }

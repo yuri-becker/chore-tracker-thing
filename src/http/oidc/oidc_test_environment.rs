@@ -12,7 +12,7 @@ use rocket::config::SecretKey;
 use rocket::http::private::TcpListener;
 use rocket::local::asynchronous::Client;
 use rocket::serde::json::json;
-use rocket::{Build, Config, Rocket};
+use rocket::{Build, Config, Rocket, Route};
 use std::net::IpAddr;
 use std::ops::Deref;
 use std::process::Stdio;
@@ -39,14 +39,20 @@ pub struct OidcTestEnvironment {
 }
 
 impl OidcTestEnvironment {
-    pub async fn launch() -> Self {
+    pub async fn launch_with_additional_routes(additional_routes: Vec<Route>) -> Self {
         init_dotenv();
         let (postgres, database) = Self::build_database().await;
         let rocket_port = Self::find_free_port().await;
         let origin = format!("http://{BIND_ADDR}:{rocket_port}");
         let dex = Self::build_dex_container(&origin).await;
         let oidc_client = Self::build_oidc_client(&origin, &dex).await;
-        let rocket = Self::build_rocket(database, rocket_port, origin.clone(), oidc_client);
+        let rocket = Self::build_rocket(
+            database,
+            rocket_port,
+            origin.clone(),
+            oidc_client,
+            additional_routes,
+        );
         let chromedriver = Self::build_chromedriver().await;
         Self {
             client: Client::tracked(rocket).await.unwrap(),
@@ -54,6 +60,9 @@ impl OidcTestEnvironment {
             _postgres: postgres,
             _dex: dex,
         }
+    }
+    pub async fn launch() -> Self {
+        Self::launch_with_additional_routes(routes![]).await
     }
 
     async fn build_database() -> (ContainerAsync<postgres::Postgres>, Database) {
@@ -95,12 +104,21 @@ impl OidcTestEnvironment {
         &self.client
     }
 
+    pub async fn fetch_dex_uri(&self) -> String {
+        let login_response = self.api().get("/oidc/login").dispatch().await;
+        login_response
+            .headers()
+            .get_one("Location")
+            .expect("Location should be set.")
+            .to_string()
+    }
+
     pub fn db(&self) -> &Database {
         self.client.rocket().state::<Database>().unwrap()
     }
 
-    pub async fn dex_browser(&self, location: &str) -> DexBrowser {
-        DexBrowser::new(self.chromedriver.1, location).await
+    pub async fn dex_browser(&self) -> DexBrowser {
+        DexBrowser::new(self.chromedriver.1, &self.fetch_dex_uri().await).await
     }
 
     fn build_rocket(
@@ -108,9 +126,11 @@ impl OidcTestEnvironment {
         rocket_port: u16,
         host: String,
         oidc_client: OidcClient,
+        additional_routes: Vec<Route>,
     ) -> Rocket<Build> {
         Rocket::build()
             .mount("/oidc", routes())
+            .mount("/", additional_routes)
             .manage(oidc_client)
             .manage(database)
             .manage(OidcLoggedInUserResolver::new_state())
