@@ -27,7 +27,7 @@ steps:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
-      - cargo test
+      - RUST_BACKTRACE=1 cargo test
 
   # FRONTEND
   - name: "[Frontend] Get Dependencies"
