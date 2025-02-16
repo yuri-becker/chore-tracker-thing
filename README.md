@@ -7,7 +7,7 @@
   <h1 align="center"><strong>Chore Tracker Thing</strong></h1>
 
   <p align="center">
-    (working title)
+    WIP.<br/> Stuff is happening on the <a href="https://github.com/yuri-becker/chore-tracker-thing/tree/develop">develop branch</a>.
   </p>
 </div>
 <br/>
