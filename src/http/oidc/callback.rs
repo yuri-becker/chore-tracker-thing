@@ -1,10 +1,13 @@
 use crate::domain::oidc_user;
 use crate::http::oidc::callback_query::CallbackQuery;
 use crate::http::oidc::oidc_error::OidcError;
-use crate::http::oidc::oidc_error::OidcError::{OidcEndpointUnreachable, Unauthorized};
+use crate::http::oidc::oidc_error::OidcError::{
+    Misconfiguration, OidcEndpointUnreachable, Unauthorized,
+};
 use crate::infrastructure::database::Database;
 use crate::infrastructure::oidc_client::{OidcClient, UserInfo};
 use log::{debug, error, warn};
+use openid::error::ClientError;
 use openid::Token;
 use rocket::http::private::cookie::CookieBuilder;
 use rocket::http::{CookieJar, SameSite};
@@ -34,8 +37,13 @@ pub async fn callback(
             let bearer = oidc_client
                 .request_token(&success.code)
                 .await
-                .inspect_err(|err| error!("Could not request OIDC token: {:?}", err))
-                .map_err(|_| OidcEndpointUnreachable(()))?;
+                .inspect_err(|err| warn!("Could not request OIDC token: {:?}", err))
+                .map_err(|err| match err {
+                    ClientError::OAuth2(_) => Unauthorized(()),
+                    ClientError::Io(_) => OidcEndpointUnreachable(()),
+                    ClientError::Url(_) => OidcEndpointUnreachable(()),
+                    _ => Misconfiguration(()),
+                })?;
             let mut token = Token::from(bearer.clone());
             let id_token = token.id_token.as_mut().ok_or(OidcEndpointUnreachable(()))?;
             oidc_client

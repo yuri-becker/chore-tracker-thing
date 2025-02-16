@@ -4,14 +4,17 @@ use crate::infrastructure::database::Database;
 use crate::infrastructure::host::test::StaticHostAccessor;
 use crate::infrastructure::oidc_client::OidcClient;
 use crate::{init_dotenv, migration};
+use fantoccini::elements::Element;
+use fantoccini::error::CmdError;
 use fantoccini::wd::Capabilities;
-use fantoccini::ClientBuilder;
+use fantoccini::{ClientBuilder, Locator};
 use rocket::config::SecretKey;
 use rocket::http::private::TcpListener;
 use rocket::local::asynchronous::Client;
 use rocket::serde::json::json;
 use rocket::{Build, Config, Rocket};
 use std::net::IpAddr;
+use std::ops::Deref;
 use std::process::Stdio;
 use std::str::FromStr;
 use std::time::Duration;
@@ -21,7 +24,7 @@ use testcontainers_modules::testcontainers::ContainerAsync;
 use testcontainers_modules::{dex, postgres};
 use tokio::io::AsyncReadExt;
 use tokio::process::{Child, Command};
-use tokio::time::timeout;
+use tokio::time::{sleep, timeout};
 
 const CLIENT_ID: &str = "ctt-test";
 const CLIENT_NAME: &str = "Chore Tracker Thing (test)";
@@ -92,29 +95,12 @@ impl OidcTestEnvironment {
         &self.client
     }
 
-    pub async fn browser(&self) -> fantoccini::Client {
-        let mut caps = Capabilities::new();
-        let headless = std::env::var("CHROMEDRIVER_HEADLESS")
-            .unwrap_or("true".to_string())
-            .parse::<bool>()
-            .expect("CHROMEDRIVER_HEADLESS must be a boolean.");
-        let no_sandbox = std::env::var("CHROMEDRIVER_NO_SANDBOX")
-            .unwrap_or("false".to_string())
-            .parse::<bool>()
-            .expect("CHROMEDRIVER_NO_SANDBOX must be a boolean.");
-        caps.insert(
-            "goog:chromeOptions".to_string(),
-            json!({"args": vec![
-                if no_sandbox {"--no-sandbox"} else {""},
-                if headless {"--headless"} else {""}
-            ].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>() }),
-        );
+    pub fn db(&self) -> &Database {
+        self.client.rocket().state::<Database>().unwrap()
+    }
 
-        ClientBuilder::native()
-            .capabilities(caps)
-            .connect(&format!("http://localhost:{}", self.chromedriver.1))
-            .await
-            .expect("Could not connect to Chromedriver")
+    pub async fn dex_browser(&self, location: &str) -> DexBrowser {
+        DexBrowser::new(self.chromedriver.1, location).await
     }
 
     fn build_rocket(
@@ -179,5 +165,87 @@ impl OidcTestEnvironment {
             .local_addr()
             .unwrap()
             .port()
+    }
+}
+
+pub struct DexBrowser {
+    client: fantoccini::Client,
+}
+
+impl Deref for DexBrowser {
+    type Target = fantoccini::Client;
+
+    fn deref(&self) -> &Self::Target {
+        &self.client
+    }
+}
+
+impl DexBrowser {
+    async fn new(chromedriver_port: u16, goto: &str) -> Self {
+        let mut caps = Capabilities::new();
+        let headless = std::env::var("CHROMEDRIVER_HEADLESS")
+            .unwrap_or("true".to_string())
+            .parse::<bool>()
+            .expect("CHROMEDRIVER_HEADLESS must be a boolean.");
+        let no_sandbox = std::env::var("CHROMEDRIVER_NO_SANDBOX")
+            .unwrap_or("false".to_string())
+            .parse::<bool>()
+            .expect("CHROMEDRIVER_NO_SANDBOX must be a boolean.");
+        caps.insert(
+            "goog:chromeOptions".to_string(),
+            json!({"args": vec![
+                if no_sandbox {"--no-sandbox"} else {""},
+                if headless {"--headless"} else {""}
+            ].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>() }),
+        );
+
+        let client = ClientBuilder::native()
+            .capabilities(caps)
+            .connect(&format!("http://localhost:{}", chromedriver_port))
+            .await
+            .expect("Could not connect to Chromedriver");
+
+        client.goto(goto).await.unwrap();
+        Self { client }
+    }
+
+    pub async fn wait_for_loaded(&self) -> Result<Element, CmdError> {
+        self.client
+            .wait()
+            .for_element(Locator::Css(".dex-container"))
+            .await
+    }
+
+    pub async fn login(&self) -> Result<(), CmdError> {
+        self.client
+            .find(Locator::Id("login"))
+            .await?
+            .send_keys("user@example.org")
+            .await?;
+        self.client
+            .find(Locator::Id("password"))
+            .await?
+            .send_keys("user")
+            .await?;
+        self.client
+            .find(Locator::Id("submit-login"))
+            .await?
+            .click()
+            .await
+    }
+
+    pub async fn grant_access(&self) -> Result<(), CmdError> {
+        let grant_access_button = Locator::Css("button.dex-btn.theme-btn--success[type=submit]");
+        self.client.wait().for_element(grant_access_button).await?;
+        self.client.find(grant_access_button).await?.click().await?;
+        sleep(Duration::from_secs(1)).await;
+        Ok(())
+    }
+
+    pub async fn parse_callback_url(&self) -> Result<String, CmdError> {
+        let callback_url = self.client.current_url().await?;
+        let callback_path = callback_url.path();
+        let callback_query = callback_url.query().expect("Should have query.");
+        Ok(format!("{callback_path}?{callback_query}"))
     }
 }
