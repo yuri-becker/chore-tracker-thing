@@ -116,16 +116,20 @@ impl LoggedInUserResolver for OidcLoggedInUserResolver {
 
 #[cfg(test)]
 pub mod test {
+    use crate::domain::oidc_user;
     use crate::http::api::api_error::ApiError;
     use crate::http::api::guards::logged_in_user::{
         LoggedInUser, LoggedInUserResolver, LoggedInUserResolverState,
     };
     use crate::http::api::UuidParam;
+    use crate::http::oidc::oidc_test_environment::OidcTestEnvironment;
     use crate::infrastructure::database::Database;
     use crate::migration::async_trait::async_trait;
     use crate::test_environment::{TestEnvironment, TestUser};
+
     use rocket::http::Status;
     use rocket::{async_test, get, routes, Request, State};
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
     use uuid::Uuid;
 
     pub struct TestLoggedInUserResolver {}
@@ -147,8 +151,20 @@ pub mod test {
         }
     }
 
+    #[get("/user")]
+    async fn oidc_backed_endpoint(
+        logged_in_user: LoggedInUser,
+        db: &Database,
+    ) -> Result<String, ApiError> {
+        Ok(oidc_user::Entity::find()
+            .filter(oidc_user::Column::UserId.eq(logged_in_user.id))
+            .one(db.conn())
+            .await?
+            .ok_or(ApiError::NotFound(()))?
+            .subject)
+    }
     #[get("/<household_id>")]
-    async fn endpoint(
+    async fn household_guarded_endpoint(
         user: LoggedInUser,
         db: &State<Database>,
         household_id: UuidParam,
@@ -160,7 +176,7 @@ pub mod test {
     async fn test_throws_unauthorized_when_no_user_given() {
         let env = TestEnvironment::builder()
             .await
-            .mount(routes![endpoint])
+            .mount(routes![household_guarded_endpoint])
             .launch()
             .await;
 
@@ -172,7 +188,7 @@ pub mod test {
     async fn test_in_household_throws_forbidden_when_not_in_household() {
         let env = TestEnvironment::builder()
             .await
-            .mount(routes![endpoint])
+            .mount(routes![household_guarded_endpoint])
             .launch()
             .await;
 
@@ -190,7 +206,7 @@ pub mod test {
     async fn test_passes_when_in_household() {
         let env = TestEnvironment::builder()
             .await
-            .mount(routes![endpoint])
+            .mount(routes![household_guarded_endpoint])
             .launch()
             .await;
 
@@ -203,5 +219,40 @@ pub mod test {
             .dispatch()
             .await;
         assert_eq!(response.status(), Status::Ok);
+    }
+
+    #[async_test]
+    async fn authenticates_user() {
+        let env =
+            OidcTestEnvironment::launch_with_additional_routes(routes![oidc_backed_endpoint]).await;
+        let browser = env.dex_browser().await;
+        browser.wait_for_loaded().await.unwrap();
+        browser.login().await.unwrap();
+        browser.grant_access().await.unwrap();
+        let callback_response = env
+            .api()
+            .get(browser.parse_callback_url().await.unwrap())
+            .dispatch()
+            .await;
+        let cookies = callback_response.cookies().iter().cloned();
+        let response = env.api().get("/user").cookies(cookies).dispatch().await;
+        assert_eq!(response.into_string().await.unwrap(), "CgR1c2VyEgVsb2NhbA");
+    }
+
+    #[async_test]
+    async fn throws_401_if_no_token() {
+        let env =
+            OidcTestEnvironment::launch_with_additional_routes(routes![oidc_backed_endpoint]).await;
+        let response = env.api().get("/user").dispatch().await;
+        assert_eq!(response.status(), Status::Unauthorized);
+    }
+
+    #[async_test]
+    async fn throws_401_if_invalid_token() {
+        let env =
+            OidcTestEnvironment::launch_with_additional_routes(routes![oidc_backed_endpoint]).await;
+        let response= env.api().get("/user").cookie(("oidc_token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"))
+            .dispatch().await;
+        assert_eq!(response.status(), Status::Unauthorized);
     }
 }

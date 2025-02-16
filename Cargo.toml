@@ -8,9 +8,9 @@ base64 = "0.22.1"
 chrono = "0.4.39"
 dotenv = "0.15.0"
 log = "0.4.22"
-openid = "0.15.0"
+openid = "0.16.1"
 pretty_env_logger = "0.5.0"
-rand = "0.8.5"
+rand = "0.9.0"
 rocket = { version = "0.5.1", features = ["secrets", "json"] }
 rust-argon2 = "2.1.0"
 sea-orm = { version = "1.1.2", features = ["mock", "sqlx-postgres", "runtime-tokio-native-tls", "with-chrono", "with-json", "with-uuid"] }
@@ -20,4 +20,9 @@ uuid = { version = "1.11.0", features = ["v7"] }
 
 [dev-dependencies]
 husky-rs = "0.1.2"
-testcontainers-modules = { version = "0.11.5", features = ["postgres", "blocking"] }
+fantoccini = "0.21.4"
+testcontainers-modules = { version = "0.11.6", features = ["postgres", "blocking", "dex"], git = "https://github.com/testcontainers/testcontainers-rs-modules-community.git" }
+tokio = { version = "*", features = ["process"] }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }

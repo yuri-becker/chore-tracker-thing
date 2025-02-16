@@ -18,10 +18,10 @@ mod migration;
 #[cfg(test)]
 mod test_environment;
 
+#[cfg(not(tarpaulin_include))]
 #[launch]
 async fn rocket() -> _ {
-    dotenv::from_filename(".env.local").ok();
-    dotenv().ok();
+    init_dotenv();
     pretty_env_logger::init_custom_env("CHORES_LOG");
     let config = Config::from_dotenv();
     debug!("Using {:?}", &config);
@@ -33,8 +33,14 @@ async fn rocket() -> _ {
         .configure(Into::<rocket::Config>::into(&config))
         .mount("/oidc", oidc::routes())
         .mount("/api/household", household::routes())
-        .manage(OidcClient::new(&config).await)
+        .manage(OidcClient::from_config(&config).await)
         .manage(OidcLoggedInUserResolver::new_state())
+        .manage(infrastructure::host::ConfigHostAccessor::new_state())
         .manage(database)
         .manage(config)
+}
+
+pub fn init_dotenv() {
+    dotenv::from_filename(".env.local").ok();
+    dotenv().ok();
 }
