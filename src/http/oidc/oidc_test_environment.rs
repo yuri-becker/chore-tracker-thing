@@ -36,6 +36,7 @@ pub struct OidcTestEnvironment {
     chromedriver: (Child, u16),
     _postgres: ContainerAsync<postgres::Postgres>,
     _dex: ContainerAsync<dex::Dex>,
+    _chrome_user_data_dir: tempfile::TempDir,
 }
 
 impl OidcTestEnvironment {
@@ -59,6 +60,7 @@ impl OidcTestEnvironment {
             chromedriver,
             _postgres: postgres,
             _dex: dex,
+            _chrome_user_data_dir: tempfile::tempdir().unwrap(),
         }
     }
     pub async fn launch() -> Self {
@@ -118,7 +120,16 @@ impl OidcTestEnvironment {
     }
 
     pub async fn dex_browser(&self) -> DexBrowser {
-        DexBrowser::new(self.chromedriver.1, &self.fetch_dex_uri().await).await
+        DexBrowser::new(
+            self.chromedriver.1,
+            self._chrome_user_data_dir
+                .path()
+                .to_str()
+                .unwrap()
+                .to_string(),
+            &self.fetch_dex_uri().await,
+        )
+        .await
     }
 
     fn build_rocket(
@@ -201,7 +212,7 @@ impl Deref for DexBrowser {
 }
 
 impl DexBrowser {
-    async fn new(chromedriver_port: u16, goto: &str) -> Self {
+    async fn new(chromedriver_port: u16, user_data_dir: String, goto: &str) -> Self {
         let mut caps = Capabilities::new();
         let headless = std::env::var("CHROMEDRIVER_HEADLESS")
             .unwrap_or("true".to_string())
@@ -214,6 +225,7 @@ impl DexBrowser {
         caps.insert(
             "goog:chromeOptions".to_string(),
             json!({"args": vec![
+                format!("--user-data-dir={user_data_dir}").as_str(),
                 if no_sandbox {"--no-sandbox"} else {""},
                 if headless {"--headless"} else {""}
             ].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>() }),

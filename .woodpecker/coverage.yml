@@ -9,7 +9,7 @@ depends_on:
 
 steps:
   - name: Generate and Upload Coverage
-    image: xd009642/tarpaulin:latest
+    image: local/tarpaulin-with-chromedriver
     commands:
       - cargo tarpaulin --engine llvm --skip-clean --coveralls "$COVERALLS_TOKEN"
     volumes:
