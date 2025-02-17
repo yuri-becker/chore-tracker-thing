@@ -23,6 +23,7 @@ husky-rs = "0.1.2"
 fantoccini = "0.21.4"
 testcontainers-modules = { version = "0.11.6", features = ["postgres", "blocking", "dex"], git = "https://github.com/testcontainers/testcontainers-rs-modules-community.git" }
 tokio = { version = "*", features = ["process"] }
+tempfile = "3.17.0"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }
