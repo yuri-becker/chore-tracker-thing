@@ -1,4 +1,4 @@
-import { useHousehold } from '../../hooks/useHousehold.tsx'
+import { useHousehold } from '../../hooks/use-household.tsx'
 import CreateTaskPage from '../create-task'
 
 const Page = () => {

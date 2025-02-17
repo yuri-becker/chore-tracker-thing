@@ -56,6 +56,7 @@ export default tseslint.config(
         'error',
         { allowConstantExport: true },
       ],
+      '@typescript-eslint/no-floating-promises': 'off'
     },
   },
 )
