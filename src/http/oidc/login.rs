@@ -25,7 +25,7 @@ pub fn login(oidc_client: &State<OidcClient>) -> Result<Redirect, Status> {
     .unwrap();
 
     let options = Options {
-        scope: Some(String::from("openid profile groups")),
+        scope: Some(String::from("openid profile groups offline_access")),
         state: Some(state),
         nonce: Some(nonce),
         ..Options::default()

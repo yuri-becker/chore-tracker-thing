@@ -3,9 +3,11 @@ use crate::http::api::api_error::{ApiError, EmptyApiResult};
 use crate::infrastructure::database::Database;
 use crate::infrastructure::oidc_client::OidcClient;
 use log::{debug, warn};
-use openid::Jws;
+use openid::{Bearer, Jws, StandardClaims, TemporalBearerGuard};
+use rocket::http::private::cookie::CookieBuilder;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome};
+use rocket::serde::json::serde_json;
 use rocket::{async_trait, Request};
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use uuid::Uuid;
@@ -83,22 +85,39 @@ impl LoggedInUserResolver for OidcLoggedInUserResolver {
             .rocket()
             .state::<OidcClient>()
             .expect("OIDC_Client is not in State, this should not occur.");
-        let token = request.cookies().get_private("oidc_token");
-        let token = token.ok_or(Status::Unauthorized).inspect_err(|_| {
+        let bearer = request.cookies().get_private("oidc_token");
+        let bearer = bearer.ok_or(Status::Unauthorized).inspect_err(|_| {
             debug!("No token found in cookie.");
         })?;
-        let mut token = Jws::new_encoded(token.value());
-        oidc_client.decode_token(&mut token).map_err(|err| {
+        let bearer: Bearer = serde_json::from_str(bearer.value()).map_err(|err| {
+            debug!("Could not parse token as JSON: {}", err);
+            Status::Unauthorized
+        })?;
+        if bearer.refresh_token.is_none() {
+            debug!("No refresh token found in token.");
+            return Err(Status::Unauthorized);
+        }
+        let refreshed_bearer = oidc_client
+            .refresh_token(TemporalBearerGuard::from(bearer), None)
+            .await
+            .inspect_err(|err| debug!("Could not refresh token: {}", err))
+            .map_err(|_| Status::Unauthorized)?;
+
+        request.cookies().add_private(CookieBuilder::new(
+            "oidc_token",
+            serde_json::to_string(&refreshed_bearer).expect("Should always be serializable."),
+        ));
+
+        let mut id_token = Jws::new_encoded(
+            &refreshed_bearer
+                .id_token
+                .expect("Token should have an id_token"),
+        );
+        oidc_client.decode_token(&mut id_token).map_err(|err| {
             warn!("Could not decode token: {}", err);
             Status::Unauthorized
         })?;
-        oidc_client
-            .validate_token(&token, None, None)
-            .map_err(|err| {
-                debug!("Failed to validate token: {}", err);
-                Status::Unauthorized
-            })?;
-        let payload = token.payload().map_err(|_| {
+        let payload: &StandardClaims = id_token.payload().map_err(|_| {
             debug!("Token does not have payload");
             Status::Unauthorized
         })?;

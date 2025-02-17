@@ -12,9 +12,9 @@ use openid::Token;
 use rocket::http::private::cookie::CookieBuilder;
 use rocket::http::{CookieJar, SameSite};
 use rocket::response::Redirect;
+use rocket::serde::json::serde_json;
 use rocket::serde::json::serde_json::json;
 use rocket::{get, State};
-
 #[get("/callback")]
 pub async fn callback(
     callback_query: CallbackQuery,
@@ -82,7 +82,7 @@ pub async fn callback(
             cookie_jar.add_private(
                 CookieBuilder::new(
                     "oidc_token",
-                    bearer.id_token.expect("Bearer should have id token"),
+                    serde_json::to_string(&bearer).expect("Should always be serializable."),
                 )
                 .same_site(SameSite::Lax)
                 .build(),
