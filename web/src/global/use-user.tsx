@@ -19,11 +19,16 @@ export const useUser = () => {
     }
   }, [setUser])
 
+  const clearUser = useCallback(() => {
+    Cookies.remove('user')
+    setUser(undefined)
+  }, [setUser])
+
   useEffect(() => {
     window.addEventListener('storage', storageListener)
     return () => {
       window.removeEventListener('storage', storageListener)
     }
   }, [storageListener])
-  return user
+  return [user, clearUser] as const
 }

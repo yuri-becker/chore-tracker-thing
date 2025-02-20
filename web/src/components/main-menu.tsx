@@ -1,16 +1,15 @@
 import { NavLink, Space } from '@mantine/core'
-import { useContext } from 'react'
 import { LogOut, Plus, Settings } from 'react-feather'
 import { NavLink as RouterLink } from 'react-router'
-import { HouseholdContext } from '../global/household-context.tsx'
+import { useHouseholdContext } from '../global/household-context.tsx'
 import { useUser } from '../global/use-user.tsx'
 import classes from './main-menu.module.css'
 
 interface MainMenuProps {closeMobile?: () => void}
 
 export const MainMenu = ({ closeMobile }: MainMenuProps) => {
-  const households = useContext(HouseholdContext)
-  const user = useUser()
+  const { households } = useHouseholdContext()
+  const [user] = useUser()
   return (
     <>
       { !households && <li aria-busy="true"></li>}

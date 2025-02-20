@@ -2,7 +2,10 @@ import { AppShell, Burger, Group } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { MainMenu } from './components/main-menu.tsx'
-import { HouseholdContextProvider } from './global/household-context.provider.tsx'
+import {
+  HouseholdContextProvider
+} from './global/household-context.provider.tsx'
+
 import { useUser } from './global/use-user.tsx'
 import CreateHouseholdPage from './pages/create-household'
 import CreateTaskPage from './pages/create-task'
@@ -11,7 +14,7 @@ import LoginPage from './pages/login'
 import SettingsPage from './pages/settings/'
 
 function App () {
-  const user = useUser()
+  const [user] = useUser()
   const [mobileOpened, { toggle: toggleMobile, close: closeMobile }] = useDisclosure()
   return (
     <BrowserRouter>
@@ -38,7 +41,6 @@ function App () {
               <MainMenu closeMobile={closeMobile} />
             </AppShell.Navbar>
             <AppShell.Main>
-              Main
               <Routes>
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route index path="/" element={<CreateHouseholdPage />} />
