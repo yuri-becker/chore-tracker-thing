@@ -35,7 +35,7 @@ steps:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
-      - RUST_BACKTRACE=1 CHROMEDRIVER_NO_SANDBOX=true cargo tarpaulin --engine llvm --skip-clean --coveralls "$COVERALLS_TOKEN"
+      - RUST_BACKTRACE=1 CHROMEDRIVER_NO_SANDBOX=true cargo test
     environment:
       COVERALLS_TOKEN:
         from_secret: coveralls_token
