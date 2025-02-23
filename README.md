@@ -42,7 +42,7 @@ OIDC-compatible authentication backend like Authelia.
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-20232A?style=for-the-badge&logo=typescript&logoColor=3178C6)](https://www.typescriptlang.org/)
 [![yarn](https://img.shields.io/badge/yarn-20232A?style=for-the-badge&logo=yarn&logoColor=2C8EBB)](https://yarnpkg.com/)
-[![AriaKit](https://img.shields.io/badge/Ariakit-20232A?style=for-the-badge&logo=ariakit&logoColor=007ACC)](https://ariakit.org/)
+[![Mantine](https://img.shields.io/badge/Mantine-20232A?style=for-the-badge&logo=mantine&logoColor=339AF0)](https://mantine.dev/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
